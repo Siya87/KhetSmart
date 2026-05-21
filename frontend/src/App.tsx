@@ -28,10 +28,13 @@ import {
   harvestShortcutText,
 } from "./components/FarmerHarvestShortcuts";
 import { FarmerVoiceInput } from "./components/FarmerVoiceInput";
+import { AuthModal } from "./components/AuthModal";
 import { LocationPermissionModal } from "./components/LocationPermissionModal";
 import { IconMic, IconRupee, IconSatellite, IconWarehouse } from "./components/icons";
 import { useAppSettings } from "./hooks/useAppSettings";
+import { useFarmerAuth } from "./hooks/useFarmerAuth";
 import { useFarmerLocation } from "./hooks/useFarmerLocation";
+import { useOnboarding } from "./hooks/useOnboarding";
 import { tFarmer, tNav } from "./i18n/farmerSimple";
 
 type Tab = "farmer" | "predict" | "network" | "finance";
@@ -70,7 +73,19 @@ export default function App() {
   const [selectedStorageId, setSelectedStorageId] = useState<string | null>(null);
   const [totalStorages, setTotalStorages] = useState(496);
   const farmerLocation = useFarmerLocation();
+  const farmerAuth = useFarmerAuth();
   const { language, fontSize, setLanguage, setFontSize } = useAppSettings();
+  const locationStepSignal =
+    !farmerLocation.showModal &&
+    (farmerLocation.hasLocation ||
+      farmerLocation.status === "denied" ||
+      farmerLocation.status === "unavailable");
+  const onboarding = useOnboarding(
+    locationStepSignal,
+    farmerAuth.isReady && !farmerAuth.hydrating
+  );
+  const [authBusy, setAuthBusy] = useState(false);
+  const [authPromptOpen, setAuthPromptOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [opsOpen, setOpsOpen] = useState(false);
   const [mapFocusKey] = useState(0);
@@ -243,12 +258,20 @@ export default function App() {
   const tf = tFarmer(language);
   const nav = tNav(language);
 
+  const showLocationModal =
+    onboarding.phase === "location" && farmerLocation.showModal;
+  const showAuthModal =
+    !farmerAuth.isAuthenticated &&
+    ((onboarding.phase === "auth" && !farmerAuth.hydrating) || authPromptOpen);
+  const appUnlocked = onboarding.phase === "app";
+
   return (
     <div
-      className={`app-shell app-shell--simple${showLogisticsVendors && tab === "farmer" ? " app-shell--logistics-vendors" : ""}`}
+      className={`app-shell app-shell--simple${showLogisticsVendors && tab === "farmer" ? " app-shell--logistics-vendors" : ""}${!appUnlocked ? " app-shell--onboarding" : ""}`}
     >
       <LocationPermissionModal
-        open={farmerLocation.showModal}
+        open={showLocationModal}
+        language={language}
         status={
           farmerLocation.status === "requesting"
             ? "requesting"
@@ -258,7 +281,63 @@ export default function App() {
         }
         error={farmerLocation.error}
         onAllow={farmerLocation.requestLocation}
-        onDismiss={() => farmerLocation.setShowModal(false)}
+        onDismiss={() => {
+          farmerLocation.setShowModal(false);
+          onboarding.completeLocationStep();
+        }}
+      />
+
+      <AuthModal
+        open={showAuthModal}
+        language={language}
+        busy={authBusy}
+        showGuestOption={onboarding.phase === "auth" && !authPromptOpen}
+        sendOtp={async (phone) => {
+          setAuthBusy(true);
+          try {
+            return await farmerAuth.sendOtp(phone);
+          } finally {
+            setAuthBusy(false);
+          }
+        }}
+        verifyOtp={async (phone, otp) => {
+          setAuthBusy(true);
+          try {
+            return await farmerAuth.verifyOtp(phone, otp);
+          } finally {
+            setAuthBusy(false);
+          }
+        }}
+        completeSignup={async (signupToken, name) => {
+          setAuthBusy(true);
+          try {
+            await farmerAuth.completeOtpSignup(signupToken, name);
+          } finally {
+            setAuthBusy(false);
+          }
+        }}
+        onPinLogin={async (phone, pin) => {
+          setAuthBusy(true);
+          try {
+            await farmerAuth.login(phone, pin);
+          } finally {
+            setAuthBusy(false);
+          }
+        }}
+        onSuccess={() => {
+          setAuthPromptOpen(false);
+          setSettingsOpen(false);
+        }}
+        onGuest={() => {
+          farmerAuth.continueAsGuest();
+          setAuthPromptOpen(false);
+        }}
+        onClose={() => {
+          if (!farmerAuth.isAuthenticated) {
+            farmerAuth.continueAsGuest();
+          }
+          setAuthPromptOpen(false);
+        }}
       />
 
       <header className="header">
@@ -297,6 +376,25 @@ export default function App() {
           onLanguageChange={setLanguage}
           onFontSizeChange={setFontSize}
           onOpenOps={() => setOpsOpen(true)}
+          isAuthenticated={farmerAuth.isAuthenticated}
+          farmer={farmerAuth.farmer}
+          onOpenLoginSignup={() => {
+            setSettingsOpen(false);
+            setAuthPromptOpen(true);
+          }}
+          onLogout={async () => {
+            await farmerAuth.logout();
+            setSettingsOpen(false);
+            setAuthPromptOpen(false);
+            farmerLocation.setShowModal(true);
+          }}
+          onSetPin={
+            farmerAuth.token
+              ? async (pin, pinConfirm) => {
+                  await farmerAuth.setPin(pin, pinConfirm);
+                }
+              : undefined
+          }
         />
       </header>
 

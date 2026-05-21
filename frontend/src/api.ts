@@ -412,6 +412,157 @@ export async function fetchHealth(): Promise<HealthInfo> {
   return res.json();
 }
 
+export interface FarmerProfile {
+  id: string;
+  phone: string;
+  name: string;
+  district: string | null;
+  has_pin?: boolean;
+  created_at: string | null;
+}
+
+export interface OtpSendResponse {
+  ok: boolean;
+  phone: string;
+  expires_in_seconds: number;
+  resend_after_seconds: number;
+  dev_otp?: string;
+}
+
+export interface OtpVerifyResponse {
+  status: "logged_in" | "needs_profile";
+  token?: string;
+  farmer?: FarmerProfile;
+  has_pin?: boolean;
+  signup_token?: string;
+  phone?: string;
+}
+
+export interface FarmerAuthResponse {
+  token: string;
+  farmer: FarmerProfile;
+}
+
+function authHeaders(token: string): HeadersInit {
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
+}
+
+async function parseAuthError(res: Response): Promise<string> {
+  try {
+    const data = (await res.json()) as { detail?: string };
+    return data.detail ?? "request_failed";
+  } catch {
+    return "request_failed";
+  }
+}
+
+export async function sendFarmerOtp(phone: string): Promise<OtpSendResponse> {
+  const res = await fetch("/api/auth/otp/send", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ phone }),
+  });
+  if (!res.ok) throw new Error(await parseAuthError(res));
+  return res.json();
+}
+
+export async function verifyFarmerOtp(
+  phone: string,
+  otp: string
+): Promise<OtpVerifyResponse> {
+  const res = await fetch("/api/auth/otp/verify", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ phone, otp }),
+  });
+  if (!res.ok) throw new Error(await parseAuthError(res));
+  return res.json();
+}
+
+export async function completeFarmerOtpSignup(body: {
+  signup_token: string;
+  name: string;
+  district?: string | null;
+}): Promise<FarmerAuthResponse> {
+  const res = await fetch("/api/auth/otp/complete-signup", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(await parseAuthError(res));
+  const data = await res.json();
+  return { token: data.token, farmer: data.farmer };
+}
+
+export async function setFarmerPin(
+  token: string,
+  pin: string,
+  pin_confirm: string
+): Promise<{ farmer: FarmerProfile }> {
+  const res = await fetch("/api/auth/pin/set", {
+    method: "POST",
+    headers: authHeaders(token),
+    body: JSON.stringify({ pin, pin_confirm }),
+  });
+  if (!res.ok) throw new Error(await parseAuthError(res));
+  return res.json();
+}
+
+export async function farmerSignup(body: {
+  phone: string;
+  name: string;
+  pin: string;
+  district?: string | null;
+}): Promise<FarmerAuthResponse> {
+  const res = await fetch("/api/auth/signup", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    if (res.status === 409) throw new Error("phone_already_registered");
+    if (res.status === 400) throw new Error("invalid_signup");
+    throw new Error("Signup failed");
+  }
+  return res.json();
+}
+
+export async function farmerLogin(body: {
+  phone: string;
+  pin: string;
+}): Promise<FarmerAuthResponse> {
+  const res = await fetch("/api/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const detail = await parseAuthError(res);
+    if (detail === "pin_not_set") throw new Error("pin_not_set");
+    if (res.status === 401) throw new Error("invalid_credentials");
+    throw new Error("Login failed");
+  }
+  return res.json();
+}
+
+export async function fetchFarmerMe(token: string): Promise<{ farmer: FarmerProfile }> {
+  const res = await fetch("/api/auth/me", {
+    headers: authHeaders(token),
+  });
+  if (!res.ok) throw new Error("not_authenticated");
+  return res.json();
+}
+
+export async function farmerLogout(token: string): Promise<void> {
+  await fetch("/api/auth/logout", {
+    method: "POST",
+    headers: authHeaders(token),
+  });
+}
+
 const ADMIN_KEY_STORAGE = "khetsmart_admin_key";
 const ADMIN_VERIFIED_STORAGE = "khetsmart_admin_verified";
 

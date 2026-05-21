@@ -279,6 +279,339 @@ h3,
   cursor: pointer;
 }
 
+.auth-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 2100;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.auth-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  border: none;
+  padding: 0;
+  margin: 0;
+  background: rgba(15, 35, 25, 0.6);
+  cursor: pointer;
+}
+
+.auth-modal__card {
+  position: relative;
+  max-width: 360px;
+  padding-top: 2.5rem;
+  width: 100%;
+  max-height: 92vh;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 1rem;
+  padding: 1.2rem 1.1rem 1rem;
+  box-shadow: 0 14px 44px rgba(0, 0, 0, 0.22);
+  text-align: center;
+}
+
+.auth-modal__close {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: none;
+  border-radius: 50%;
+  background: #eef2ef;
+  color: #3d4f44;
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.auth-modal__close:hover:not(:disabled) {
+  background: #e0e8e3;
+}
+
+.auth-modal__close:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.auth-modal__icon {
+  font-size: 2rem;
+}
+
+.auth-modal__card h2 {
+  margin: 0.35rem 0 0.2rem;
+  font-size: 1.1rem;
+  color: var(--green-dark);
+}
+
+.auth-modal__sub {
+  margin: 0 0 0.75rem;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: #5a6b62;
+}
+
+.auth-modal__tabs {
+  display: flex;
+  gap: 0.35rem;
+  margin-bottom: 0.85rem;
+  padding: 0.2rem;
+  background: #eef2ef;
+  border-radius: 10px;
+}
+
+.auth-modal__tab {
+  flex: 1;
+  min-height: 42px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: #5a6b62;
+  cursor: pointer;
+}
+
+.auth-modal__tab--on {
+  background: #fff;
+  color: var(--green-dark);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.auth-modal__form {
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.auth-modal__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.auth-modal__field span {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--green-dark);
+}
+
+.auth-modal__field input {
+  min-height: 48px;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid #c5d4cb;
+  border-radius: 10px;
+  font-size: 1rem;
+}
+
+.auth-modal__field small {
+  font-size: 0.68rem;
+  color: #7a8f84;
+}
+
+.auth-modal__error {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #c62828;
+  text-align: center;
+}
+
+.auth-modal__submit {
+  width: 100%;
+  margin-top: 0.25rem;
+}
+
+.auth-modal__guest {
+  margin-top: 0.65rem;
+  background: none;
+  border: none;
+  font-size: 0.75rem;
+  color: #5a6b62;
+  text-decoration: underline;
+  cursor: pointer;
+  width: 100%;
+}
+
+.auth-modal__guest--link {
+  margin-top: 0.35rem;
+}
+
+.auth-modal__otp-sent {
+  margin: 0 0 0.5rem;
+  font-size: 0.82rem;
+  color: #5a6b62;
+  text-align: center;
+}
+
+.auth-modal__dev-otp {
+  margin: 0 0 0.65rem;
+  padding: 0.45rem 0.55rem;
+  border-radius: 8px;
+  background: #fff8e1;
+  font-size: 0.78rem;
+  text-align: center;
+  color: #5d4037;
+}
+
+.auth-modal__otp-input {
+  letter-spacing: 0.35em;
+  text-align: center;
+  font-size: 1.25rem !important;
+  font-weight: 700;
+}
+
+.auth-modal__resend,
+.auth-modal__back-link {
+  margin-top: 0.45rem;
+  background: none;
+  border: none;
+  font-size: 0.78rem;
+  color: var(--green-dark);
+  text-decoration: underline;
+  cursor: pointer;
+  width: 100%;
+}
+
+.auth-modal__resend:disabled {
+  color: #9aa8a0;
+  cursor: not-allowed;
+  text-decoration: none;
+}
+
+.settings-menu__setpin-btn {
+  width: 100%;
+  min-height: 44px;
+  margin-bottom: 0.5rem;
+  border: 1px solid #c5d4cb;
+  border-radius: 10px;
+  background: #f5f9f6;
+  font-weight: 700;
+  color: var(--green-dark);
+  cursor: pointer;
+}
+
+.settings-menu__setpin-btn--primary {
+  background: linear-gradient(135deg, #f5d76e, #e8b923);
+  border-color: #e8b923;
+  color: #1a3d2e;
+}
+
+.settings-menu__setpin-sub,
+.settings-menu__pin-on {
+  margin: 0 0 0.65rem;
+  font-size: 0.78rem;
+  color: #5a6b62;
+}
+
+.settings-menu__pin-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin-bottom: 0.5rem;
+}
+
+.settings-menu__pin-field input {
+  min-height: 44px;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid #c5d4cb;
+  border-radius: 8px;
+}
+
+.settings-menu__pin-msg {
+  margin: 0 0 0.5rem;
+  font-size: 0.78rem;
+  color: var(--green-dark);
+  font-weight: 600;
+}
+
+.app-shell--onboarding .header,
+.app-shell--onboarding .main,
+.app-shell--onboarding .tabs {
+  pointer-events: none;
+  user-select: none;
+  filter: blur(2px);
+}
+
+.settings-menu__user {
+  padding: 0.65rem 0.85rem;
+  border-bottom: 1px solid #e8ece9;
+  text-align: left;
+}
+
+.settings-menu__user-lbl {
+  display: block;
+  font-size: 0.68rem;
+  color: #7a8f84;
+}
+
+.settings-menu__user strong {
+  font-size: 0.92rem;
+  color: var(--green-dark);
+}
+
+.settings-menu__item--logout strong {
+  color: #c62828;
+}
+
+.settings-menu__item--accent {
+  background: linear-gradient(90deg, #f1f8f4 0%, #fff 100%);
+}
+
+.settings-menu__item--accent strong {
+  color: var(--green-dark);
+}
+
+.settings-menu__profile {
+  padding: 0.5rem 0.85rem 1rem;
+}
+
+.settings-menu__profile-dl {
+  margin: 0 0 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.settings-menu__profile-dl div {
+  padding: 0.55rem 0.65rem;
+  border-radius: 10px;
+  background: #f5f9f6;
+  border: 1px solid #e0e8e3;
+}
+
+.settings-menu__profile-dl dt {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #7a8f84;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.settings-menu__profile-dl dd {
+  margin: 0.2rem 0 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--green-dark);
+}
+
+.settings-menu__logout-btn {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid #ffcdd2;
+  border-radius: 10px;
+  background: #fff5f5;
+  color: #c62828;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
 /* Compact location strip (Swiggy / Maps style) */
 .loc-strip-wrap {
   margin-bottom: 0.6rem;

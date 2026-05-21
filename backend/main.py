@@ -23,6 +23,15 @@ from services.storage_repo import list_storages, update_storage_utilization, cou
 from services.yield_service import get_latest_yield, to_legacy_forecast
 from startup import init_database
 from deps import verify_admin
+from services.farmer_auth import (
+    farmer_to_dict,
+    get_farmer_by_token,
+    login_farmer,
+    logout_farmer,
+    set_farmer_pin,
+    signup_farmer,
+)
+from services.farmer_otp import complete_signup_after_otp, send_otp, verify_otp
 
 
 @asynccontextmanager
@@ -69,6 +78,122 @@ class ConsultRequest(BaseModel):
 
 class StorageUpdateRequest(BaseModel):
     utilization_pct: int = Field(..., ge=0, le=100)
+
+
+class FarmerSignupRequest(BaseModel):
+    phone: str = Field(..., examples=["9876543210"])
+    name: str = Field(..., min_length=2, max_length=120)
+    pin: str = Field(..., min_length=4, max_length=6, examples=["1234"])
+    district: str | None = None
+
+
+class FarmerLoginRequest(BaseModel):
+    phone: str = Field(..., examples=["9876543210"])
+    pin: str = Field(..., min_length=4, max_length=6)
+
+
+class OtpSendRequest(BaseModel):
+    phone: str = Field(..., examples=["9876543210"])
+
+
+class OtpVerifyRequest(BaseModel):
+    phone: str = Field(..., examples=["9876543210"])
+    otp: str = Field(..., min_length=6, max_length=6)
+
+
+class OtpCompleteSignupRequest(BaseModel):
+    signup_token: str
+    name: str = Field(..., min_length=2, max_length=120)
+    district: str | None = None
+
+
+class SetPinRequest(BaseModel):
+    pin: str = Field(..., min_length=4, max_length=6)
+    pin_confirm: str = Field(..., min_length=4, max_length=6)
+
+
+def _auth_response(farmer, token: str) -> dict:
+    return {
+        "token": token,
+        "farmer": farmer_to_dict(farmer),
+    }
+
+
+@app.post("/api/auth/otp/send")
+def auth_otp_send(body: OtpSendRequest, db: Session = Depends(get_db)):
+    return send_otp(db, body.phone)
+
+
+@app.post("/api/auth/otp/verify")
+def auth_otp_verify(body: OtpVerifyRequest, db: Session = Depends(get_db)):
+    return verify_otp(db, body.phone, body.otp)
+
+
+@app.post("/api/auth/otp/complete-signup")
+def auth_otp_complete_signup(
+    body: OtpCompleteSignupRequest, db: Session = Depends(get_db)
+):
+    return complete_signup_after_otp(
+        db, body.signup_token, body.name, body.district
+    )
+
+
+@app.post("/api/auth/pin/set")
+def auth_set_pin(
+    body: SetPinRequest,
+    db: Session = Depends(get_db),
+    authorization: str | None = Header(None),
+):
+    if body.pin != body.pin_confirm:
+        raise HTTPException(400, detail="pin_mismatch")
+    token = None
+    if authorization and authorization.lower().startswith("bearer "):
+        token = authorization[7:].strip()
+    farmer = get_farmer_by_token(db, token)
+    if not farmer:
+        raise HTTPException(401, detail="not_authenticated")
+    set_farmer_pin(db, farmer, body.pin)
+    return {"ok": True, "farmer": farmer_to_dict(farmer)}
+
+
+@app.post("/api/auth/signup")
+def farmer_signup(body: FarmerSignupRequest, db: Session = Depends(get_db)):
+    farmer, token = signup_farmer(
+        db, body.phone, body.name, body.pin, body.district
+    )
+    return _auth_response(farmer, token)
+
+
+@app.post("/api/auth/login")
+def farmer_login(body: FarmerLoginRequest, db: Session = Depends(get_db)):
+    farmer, token = login_farmer(db, body.phone, body.pin)
+    return _auth_response(farmer, token)
+
+
+@app.get("/api/auth/me")
+def farmer_me(
+    db: Session = Depends(get_db),
+    authorization: str | None = Header(None),
+):
+    token = None
+    if authorization and authorization.lower().startswith("bearer "):
+        token = authorization[7:].strip()
+    farmer = get_farmer_by_token(db, token)
+    if not farmer:
+        raise HTTPException(401, detail="not_authenticated")
+    return {"farmer": farmer_to_dict(farmer)}
+
+
+@app.post("/api/auth/logout")
+def farmer_logout(
+    db: Session = Depends(get_db),
+    authorization: str | None = Header(None),
+):
+    token = None
+    if authorization and authorization.lower().startswith("bearer "):
+        token = authorization[7:].strip()
+    logout_farmer(db, token)
+    return {"ok": True}
 
 
 @app.get("/api/health")

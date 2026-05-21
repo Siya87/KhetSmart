@@ -42,3 +42,13 @@ CORS_ORIGINS = os.getenv(
 ).split(",")
 
 DATA_DIR = BASE_DIR / "data"
+
+# Farmer login/signup session tokens (set in production)
+FARMER_AUTH_SECRET = os.getenv(
+    "FARMER_AUTH_SECRET", "khetsmart-dev-change-in-production"
+)
+
+# OTP (SMS). Set OTP_DEV_EXPOSE=false in production.
+OTP_LENGTH = int(os.getenv("OTP_LENGTH", "6"))
+OTP_TTL_MINUTES = int(os.getenv("OTP_TTL_MINUTES", "10"))
+OTP_DEV_EXPOSE = os.getenv("OTP_DEV_EXPOSE", "true").lower() in ("1", "true", "yes")
