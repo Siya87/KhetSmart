@@ -343,20 +343,9 @@ export default function App() {
       <header className="header">
         <div className="header__glow" aria-hidden />
         <div className="header-top">
-          <div>
-            {tab !== "farmer" && (
-              <p className="header__eyebrow">Agri-FinTech · West Bengal</p>
-            )}
+          <div className="header-top__left">
+            <p className="header__eyebrow">Agri-FinTech · West Bengal</p>
             <h1 className="brand">KhetSmart</h1>
-            {tab === "farmer" && (
-              <FarmerHeaderLocation
-                status={farmerLocation.status}
-                coords={farmerLocation.coords}
-                error={farmerLocation.error}
-                onEnable={farmerLocation.openPermissionModal}
-                language={language}
-              />
-            )}
           </div>
           <button
             type="button"
@@ -368,6 +357,17 @@ export default function App() {
             <span aria-hidden>🥔</span>
           </button>
         </div>
+        {tab === "farmer" && (
+          <div className="header-loc-wrap">
+            <FarmerHeaderLocation
+              status={farmerLocation.status}
+              coords={farmerLocation.coords}
+              error={farmerLocation.error}
+              onEnable={farmerLocation.openPermissionModal}
+              language={language}
+            />
+          </div>
+        )}
         <SettingsMenu
           open={settingsOpen}
           onClose={() => setSettingsOpen(false)}
@@ -404,8 +404,7 @@ export default function App() {
         {tab === "farmer" && (
           <div className="farmer-view">
             {!showLogisticsVendors && (
-              <div className="phone-frame phone-frame--pro">
-                <div className="phone-frame__screen">
+              <section className="visual-card farmer-panel animate-in">
                   <FarmerVoiceInput
                     value={text}
                     onChange={handleTextChange}
@@ -456,8 +455,7 @@ export default function App() {
                       )}
                     </button>
                   )}
-                </div>
-              </div>
+              </section>
             )}
 
             {loading && !showLogisticsVendors && (

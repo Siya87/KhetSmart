@@ -83,6 +83,16 @@ h3,
   z-index: 1;
 }
 
+.header-top__left {
+  min-width: 0;
+  flex: 1;
+}
+
+.header .brand {
+  font-family: "Playfair Display", "Libre Baskerville", Georgia, serif;
+  font-weight: 700;
+}
+
 .header__eyebrow {
   margin: 0;
   font-size: 0.65rem;
@@ -134,6 +144,8 @@ h3,
 
 .header-loc-wrap {
   margin-top: 0.45rem;
+  position: relative;
+  z-index: 1;
 }
 
 .header-loc {
@@ -2043,9 +2055,13 @@ h3,
 }
 
 /* Predict — professional layout */
-.predict-view--pro {
+.predict-view {
   display: flex;
   flex-direction: column;
+  gap: 0.85rem;
+}
+
+.predict-view--pro {
   gap: 0.7rem;
 }
 
@@ -4835,6 +4851,15 @@ h3,
   gap: 0.25rem;
 }
 
+.farmer-panel {
+  margin-bottom: 0.85rem;
+}
+
+.farmer-panel .btn-primary {
+  width: 100%;
+  margin-top: 0.35rem;
+}
+
 .farmer-results {
   display: flex;
   flex-direction: column;
@@ -5293,22 +5318,65 @@ h3,
 }
 
 .predict-hero--simple {
-  padding: 0.85rem 1rem;
+  background: #fff;
+  color: var(--green-dark);
+  border-radius: 1rem;
+  padding: 1rem;
+  box-shadow: var(--shadow);
+  border: 1px solid rgba(26, 61, 46, 0.06);
 }
 
-.predict-hero__title-simple {
+.predict-hero--simple .predict-hero__title-simple {
   margin: 0;
-  font-size: 1.15rem;
+  font-size: 1.05rem;
+  font-family: "Playfair Display", serif;
+  font-weight: 700;
+  color: var(--green-dark);
 }
 
-.predict-hero__region-simple {
+.predict-hero--simple .predict-hero__region-simple {
   margin: 0.35rem 0 0;
-  font-size: 0.9rem;
-  color: #e8f5e9;
+  font-size: 0.88rem;
+  color: #5a6b62;
+  line-height: 1.4;
+}
+
+.predict-hero--simple .predict-hero__region-simple strong {
+  color: var(--green-dark);
+}
+
+.predict-hero--simple .glut-gauge__value,
+.predict-hero--simple .glut-gauge__label {
+  color: var(--green-dark);
+}
+
+.predict-hero--simple .glut-gauge__label {
+  opacity: 1;
+  color: #5a6b62;
 }
 
 .predict-view--simple {
-  gap: 0.65rem;
+  gap: 1.1rem;
+}
+
+.predict-view--simple .predict-hero--simple {
+  margin-bottom: 0;
+  box-shadow: var(--shadow);
+}
+
+.predict-view--simple .next-steps--simple {
+  margin-top: 0;
+}
+
+.predict-gemini {
+  padding: 1.15rem 1.1rem;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border: 1.5px solid #8b5cf6;
+  box-shadow: 0 8px 30px rgba(139, 92, 246, 0.15);
+  color: #fff;
+  position: relative;
+  overflow: hidden;
 }
 
 .next-steps--simple .next-steps__list--simple .next-steps__text {

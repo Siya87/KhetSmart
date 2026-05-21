@@ -230,19 +230,7 @@ export function PredictPanel({ totalStorages, onGoNetwork, language = "bn" }: Pr
       />
 
       {/* GEMINI AI AGRICULTURAL BRAIN PANEL */}
-      <section
-        style={{
-          marginTop: "20px",
-          padding: "20px",
-          borderRadius: "16px",
-          background: "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)",
-          border: "1.5px solid #8b5cf6",
-          boxShadow: "0 8px 30px rgba(139, 92, 246, 0.15)",
-          color: "#fff",
-          position: "relative",
-          overflow: "hidden",
-        }}
-      >
+      <section className="predict-gemini">
         <div
           style={{
             display: "flex",
