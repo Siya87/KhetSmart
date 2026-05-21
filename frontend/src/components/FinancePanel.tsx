@@ -59,24 +59,7 @@ export function FinancePanel({ result, formatInr, onGoFarmer, language }: Props)
       </header>
 
       {result ? (
-        <>
-          <LoanOfferCard result={result} formatInr={formatInr} variant="full" />
-          {result.price_comparison && (
-            <section className="finance-distress pro-card">
-              <h3>Price context for your loan</h3>
-              <p className="finance-distress__headline">
-                {result.price_comparison.headline}
-              </p>
-              <p className="hint">{result.price_comparison.detail}</p>
-              {result.price_comparison.in_distress_zone && (
-                <p className="finance-distress__alert">
-                  You are in the distress zone — micro-loan helps bridge storage until
-                  mandi recovers.
-                </p>
-              )}
-            </section>
-          )}
-        </>
+        <LoanOfferCard result={result} formatInr={formatInr} variant="full" language={language} />
       ) : (
         <section className="finance-empty pro-card">
           <span className="finance-empty__icon" aria-hidden>
@@ -90,15 +73,20 @@ export function FinancePanel({ result, formatInr, onGoFarmer, language }: Props)
         </section>
       )}
 
-      <section className="finance-how pro-card">
-        <h3>{t.howTitle}</h3>
-        <ol className="finance-how__list">
-          {t.steps.map((step) => (
-            <li key={step}>{step}</li>
-          ))}
-        </ol>
-        <p className="finance-how__disclaimer">{t.disclaimer}</p>
-      </section>
+      {language === "en" && (
+        <section className="finance-how pro-card">
+          <h3>{t.howTitle}</h3>
+          <ol className="finance-how__list">
+            {t.steps.map((step) => (
+              <li key={step}>{step}</li>
+            ))}
+          </ol>
+          <p className="finance-how__disclaimer">{t.disclaimer}</p>
+        </section>
+      )}
+      {language === "bn" && (
+        <p className="finance-how__disclaimer finance-how__disclaimer--solo">{t.disclaimer}</p>
+      )}
     </div>
   );
 }

@@ -32,6 +32,7 @@ import { LocationPermissionModal } from "./components/LocationPermissionModal";
 import { IconMic, IconRupee, IconSatellite, IconWarehouse } from "./components/icons";
 import { useAppSettings } from "./hooks/useAppSettings";
 import { useFarmerLocation } from "./hooks/useFarmerLocation";
+import { tFarmer } from "./i18n/farmerSimple";
 
 type Tab = "farmer" | "predict" | "network" | "finance";
 
@@ -237,9 +238,11 @@ export default function App() {
     }
   }
 
+  const tf = tFarmer(language);
+
   return (
     <div
-      className={`app-shell${showLogisticsVendors && tab === "farmer" ? " app-shell--logistics-vendors" : ""}`}
+      className={`app-shell app-shell--simple${showLogisticsVendors && tab === "farmer" ? " app-shell--logistics-vendors" : ""}`}
     >
       <LocationPermissionModal
         open={farmerLocation.showModal}
@@ -259,7 +262,9 @@ export default function App() {
         <div className="header__glow" aria-hidden />
         <div className="header-top">
           <div>
-            <p className="header__eyebrow">Agri-FinTech · West Bengal</p>
+            {tab !== "farmer" && (
+              <p className="header__eyebrow">Agri-FinTech · West Bengal</p>
+            )}
             <h1 className="brand">KhetSmart</h1>
             {tab === "farmer" && (
               <FarmerHeaderLocation
@@ -267,6 +272,7 @@ export default function App() {
                 coords={farmerLocation.coords}
                 error={farmerLocation.error}
                 onEnable={farmerLocation.openPermissionModal}
+                language={language}
               />
             )}
           </div>
@@ -304,6 +310,7 @@ export default function App() {
                     onChange={handleTextChange}
                     disabled={loading}
                     inputError={inputError}
+                    language={language}
                   />
                   <FarmerHarvestShortcuts
                     selection={
@@ -320,6 +327,7 @@ export default function App() {
                         : handleHarvestChange
                     }
                     disabled={loading}
+                    language={language}
                   />
                   {awaitingConfirm && parsePreview && confirmOverrides && (
                     <FarmerParseConfirm
@@ -343,7 +351,7 @@ export default function App() {
                           Checking…
                         </span>
                       ) : (
-                        "Get Route + Micro-loan"
+                        tf.getRoute
                       )}
                     </button>
                   )}
@@ -365,10 +373,10 @@ export default function App() {
                 recommendedId={logisticsMeta?.recommended_vendor_id}
                 destinationName={logisticsMeta?.destination_name ?? result?.route.storage_name}
                 quantityQ={logisticsMeta?.quantity_quintals ?? result?.parsed.quantity_quintals ?? 50}
-                routeDistanceKm={logisticsMeta?.route_distance_km ?? result?.route.distance_km}
                 loading={vendorsLoading}
                 onBack={() => setShowLogisticsVendors(false)}
                 formatInr={formatInr}
+                language={language}
               />
             )}
 
@@ -378,6 +386,7 @@ export default function App() {
                 formatInr={formatInr}
                 onViewFinance={() => setTab("finance")}
                 onShowAllVendors={handleShowAllVendors}
+                language={language}
               />
             )}
           </div>
@@ -387,6 +396,7 @@ export default function App() {
           <PredictPanel
             totalStorages={totalStorages}
             onGoNetwork={() => setTab("network")}
+            language={language}
           />
         )}
 

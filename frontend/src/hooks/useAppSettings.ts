@@ -14,13 +14,14 @@ const FONT_SCALES: Record<AppFontSize, string> = {
 
 function readLang(): AppLanguage {
   const v = localStorage.getItem(LANG_KEY);
-  return v === "bn" ? "bn" : "en";
+  if (v === "en") return "en";
+  return "bn";
 }
 
 function readFont(): AppFontSize {
   const v = localStorage.getItem(FONT_KEY);
-  if (v === "sm" || v === "lg") return v;
-  return "md";
+  if (v === "sm" || v === "md") return v;
+  return "lg";
 }
 
 function applySettings(lang: AppLanguage, fontSize: AppFontSize) {

@@ -5,12 +5,11 @@ import {
   type NdviHistoryPoint,
   type YieldForecast,
 } from "../api";
-import { EnvironmentLayers } from "./EnvironmentLayers";
-import { NdviChart } from "./NdviChart";
 import { PredictHero } from "./PredictHero";
 import { PredictSignalsRow } from "./PredictSignalsRow";
 import { PredictNextSteps } from "./PredictNextSteps";
-import { IconSatellite } from "./icons";
+import type { AppLanguage } from "../hooks/useAppSettings";
+import { tPredict } from "../i18n/farmerSimple";
 
 function friendlySource(satelliteSource: string) {
   if (satelliteSource.toLowerCase().includes("copernicus")) {
@@ -47,11 +46,12 @@ function farmerActions(alert: string, glut: number) {
 type Props = {
   totalStorages: number;
   onGoNetwork?: () => void;
+  language?: AppLanguage;
 };
 
-export function PredictPanel({ totalStorages, onGoNetwork }: Props) {
+export function PredictPanel({ totalStorages, onGoNetwork, language = "bn" }: Props) {
   const [yieldData, setYieldData] = useState<YieldForecast | null>(null);
-  const [history, setHistory] = useState<NdviHistoryPoint[]>([]);
+  const [, setHistory] = useState<NdviHistoryPoint[]>([]);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
@@ -92,9 +92,17 @@ export function PredictPanel({ totalStorages, onGoNetwork }: Props) {
   const utilPct = yieldData.avg_storage_util_pct ?? 60;
   const critical = yieldData.storages_critical ?? 0;
 
+  const tp = tPredict(language);
+  const simple = true;
+
   return (
-    <div className="predict-view predict-view--pro animate-in">
-      <PredictHero data={yieldData} sourceLabel={friendlySource(yieldData.satellite_source)} />
+    <div className="predict-view predict-view--simple animate-in">
+      <PredictHero
+        data={yieldData}
+        sourceLabel={friendlySource(yieldData.satellite_source)}
+        simple={simple}
+        language={language}
+      />
 
       <PredictSignalsRow
         mandiAvg={yieldData.mandi_avg_price}
@@ -104,30 +112,18 @@ export function PredictPanel({ totalStorages, onGoNetwork }: Props) {
         utilPct={utilPct}
         totalStorages={totalStorages}
         critical={critical}
+        simple={simple}
+        language={language}
       />
-
-      <section className="predict-chart-card">
-        <NdviChart ndvi={yieldData.ndvi} history={history} />
-      </section>
-
-      {yieldData.environment_layers ? (
-        <EnvironmentLayers layers={yieldData.environment_layers} />
-      ) : null}
 
       <PredictNextSteps
         actions={actions}
         alertLevel={yieldData.alert_level}
         glutPct={yieldData.glut_risk_pct}
         onGoNetwork={onGoNetwork}
+        simple={simple}
+        language={language}
       />
-
-      <p className="predict-lulc-foot">
-        <IconSatellite />
-        <span>
-          <strong>{yieldData.lulc_potato_acres.toLocaleString("en-IN")}</strong> potato acres ·
-          Damodar LULC
-        </span>
-      </p>
     </div>
   );
 }

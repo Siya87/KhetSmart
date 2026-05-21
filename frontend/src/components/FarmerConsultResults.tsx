@@ -1,4 +1,6 @@
 import type { ConsultResponse } from "../api";
+import type { AppLanguage } from "../hooks/useAppSettings";
+import { glutLabelBnEn, tFarmer } from "../i18n/farmerSimple";
 import { DistressPriceCard } from "./DistressPriceCard";
 import { GlutGauge } from "./GlutGauge";
 import { RouteFlow } from "./RouteFlow";
@@ -9,9 +11,10 @@ type Props = {
   formatInr: (n: number) => string;
   onViewFinance?: () => void;
   onShowAllVendors?: () => void;
+  language?: AppLanguage;
 };
 
-function truncateStorage(name: string, max = 28) {
+function truncateStorage(name: string, max = 22) {
   if (name.length <= max) return name;
   return `${name.slice(0, max)}…`;
 }
@@ -21,73 +24,55 @@ function FarmerConsultResults({
   formatInr,
   onViewFinance,
   onShowAllVendors,
+  language = "bn",
 }: Props) {
-  const insight = result.yield_signal.insight;
-  const shortInsight =
-    insight.length > 160 ? `${insight.slice(0, 157)}…` : insight;
+  const t = tFarmer(language);
+  const glutWord = glutLabelBnEn(language, result.yield_signal.alert_level);
 
   return (
-    <div className="farmer-results animate-in">
+    <div className="farmer-results farmer-results--simple animate-in">
       <div className="farmer-results__header">
-        <span className="farmer-results__badge">Plan ready</span>
-        <h2 className="farmer-results__title">Your corridor plan</h2>
-        <p className="farmer-results__sub">
-          Route and mandi price from your harvest + live GPS
-        </p>
+        <span className="farmer-results__badge">{t.planReady}</span>
+        <h2 className="farmer-results__title">{t.planTitle}</h2>
       </div>
 
-      <section className="pro-card pro-card--signal">
-        <div className="pro-card__head">
-          <span className="pro-card__icon pro-card__icon--sky">◎</span>
-          <div>
-            <span className="pro-card__eyebrow">Market intelligence</span>
-            <h3>Yield & glut signal</h3>
-          </div>
+      <div className="simple-hero-strip">
+        <div className="simple-hero-strip__item simple-hero-strip__item--gold">
+          <span className="simple-hero-strip__lbl">{t.profit}</span>
+          <strong>{formatInr(result.route.estimated_profit_inr)}</strong>
         </div>
-        <div className="pro-signal">
-          <GlutGauge
-            value={result.yield_signal.glut_risk_pct}
-            alertLevel={result.yield_signal.alert_level}
-          />
-          <div className="pro-signal__copy">
-            <p className="pro-signal__insight" title={insight}>
-              {shortInsight}
-            </p>
-            <div className="parsed-chips">
-              <span className="chip chip--gold">
-                {result.parsed.quantity_quintals} q
-              </span>
-              <span className="chip">{result.parsed.crop}</span>
-              {result.parsed.district && (
-                <span className="chip">{result.parsed.district}</span>
-              )}
-              <span className="chip chip--outline">
-                NLP {Math.round(result.parsed.confidence * 100)}%
-              </span>
-            </div>
-          </div>
+        <div className="simple-hero-strip__item">
+          <span className="simple-hero-strip__lbl">{t.glutLabel}</span>
+          <strong>
+            {result.yield_signal.glut_risk_pct}% · {glutWord}
+          </strong>
         </div>
-      </section>
+        <div className="simple-hero-strip__item">
+          <span className="simple-hero-strip__lbl">{t.yourLoad}</span>
+          <strong>
+            {result.parsed.quantity_quintals} q · {result.parsed.crop}
+          </strong>
+        </div>
+      </div>
 
-      <section className="pro-card pro-card--route">
+      <section className="pro-card pro-card--route pro-card--simple">
         <div className="pro-card__head pro-card__head--with-action">
           <span className="pro-card__icon pro-card__icon--route">
             <IconTruck className="pro-card__icon-svg" />
           </span>
           <div className="pro-card__head-main">
-            <span className="pro-card__eyebrow">Logistics</span>
-            <h3>Optimal cold-storage route</h3>
+            <h3 className="pro-card__title-simple">{t.transport}</h3>
           </div>
           {onShowAllVendors && (
             <button
               type="button"
-              className="route-show-map route-show-map--head"
+              className="route-show-map route-show-map--head route-show-map--simple"
               onClick={onShowAllVendors}
             >
               <span className="route-show-map__icon" aria-hidden>
                 🚛
               </span>
-              Show all vendors
+              {t.allVendors}
             </button>
           )}
         </div>
@@ -95,20 +80,23 @@ function FarmerConsultResults({
           storageName={truncateStorage(result.route.storage_name)}
           storageNameFull={result.route.storage_name}
           distanceKm={result.route.distance_km}
-          distanceSource={result.route.distance_source}
           costInr={result.route.logistics_cost_inr}
           profitInr={result.route.estimated_profit_inr}
+          language={language}
+          simple
         />
-        {result.route.why && result.route.why.length > 0 && (
-          <ul className="pro-checklist">
-            {result.route.why.map((line) => (
-              <li key={line}>{line}</li>
-            ))}
-          </ul>
-        )}
+        <ul className="pro-checklist pro-checklist--simple">
+          <li>
+            {t.coldStorage}: {truncateStorage(result.route.storage_name, 36)}
+          </li>
+          <li>
+            {Math.round(result.route.distance_km)} {t.km} · {t.transportCost}{" "}
+            {formatInr(result.route.logistics_cost_inr)}
+          </li>
+        </ul>
       </section>
 
-      {result.price_comparison && (
+      {result.price_comparison && result.price_comparison.uplift_vs_distress_inr > 0 && (
         <DistressPriceCard
           distressPerQ={result.price_comparison.distress_price_per_quintal}
           livePerQ={result.price_comparison.live_mandi_price_per_quintal}
@@ -120,23 +108,24 @@ function FarmerConsultResults({
           headline={result.price_comparison.headline}
           detail={result.price_comparison.detail}
           inDistressZone={result.price_comparison.in_distress_zone}
+          simple
+          language={language}
         />
       )}
 
       {onViewFinance && (
-        <section className="pro-card pro-card--finance-teaser">
-          <div className="finance-teaser">
+        <section className="pro-card pro-card--finance-teaser pro-card--simple">
+          <div className="finance-teaser finance-teaser--simple">
             <div>
-              <span className="pro-card__eyebrow">Agri-FinTech</span>
-              <h3>Micro-loan & GRN</h3>
-              <p className="finance-teaser__line">
+              <h3 className="pro-card__title-simple">{t.loan}</h3>
+              <p className="finance-teaser__line finance-teaser__line--big">
                 {result.loan.approved
-                  ? `${formatInr(result.loan.amount_inr)} pre-approved · ${result.loan.interest_rate_pa}% p.a.`
-                  : "Check eligibility on Finance tab"}
+                  ? formatInr(result.loan.amount_inr)
+                  : "—"}
               </p>
             </div>
-            <button type="button" className="finance-teaser__btn" onClick={onViewFinance}>
-              Finance →
+            <button type="button" className="finance-teaser__btn finance-teaser__btn--lg" onClick={onViewFinance}>
+              {t.loanBtn} →
             </button>
           </div>
         </section>

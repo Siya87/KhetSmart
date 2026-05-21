@@ -2966,6 +2966,92 @@ h3,
   color: #e65100;
 }
 
+.logistics-vendors--simple {
+  padding-bottom: 1rem;
+}
+
+.logistics-vendors--simple .logistics-vendors__banner {
+  margin-bottom: 0.65rem;
+}
+
+.logistics-vendors--simple .logistics-vendors__eyebrow {
+  display: none;
+}
+
+.logistics-vendors--simple .logistics-vendors__title {
+  font-size: 1.35rem;
+}
+
+.logistics-vendors--simple .logistics-vendors__sub {
+  font-size: 0.9rem;
+  margin-top: 0.35rem;
+}
+
+.logistics-vendor-card--simple {
+  padding: 0.85rem;
+}
+
+.logistics-vendor-card--simple .logistics-vendor-card__meta strong {
+  font-size: 1rem;
+}
+
+.logistics-vendor-card--simple .logistics-vendor-card__meta span {
+  font-size: 0.82rem;
+}
+
+.logistics-vendor-card__quote--simple {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.45rem;
+  padding: 0.65rem 0.75rem;
+  background: #fffbeb;
+  border: 2px solid var(--gold-dark);
+  border-radius: 0.65rem;
+}
+
+.logistics-vendor-card__quote-lbl {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--green-dark);
+}
+
+.logistics-vendor-card__quote-amt {
+  font-size: 1.25rem;
+  color: var(--green-dark);
+}
+
+.logistics-vendor-card__vehicle-line {
+  margin: 0 0 0.65rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #2f4538;
+}
+
+.logistics-vendor-card__call--primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 52px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  background: var(--gold) !important;
+  border: 2px solid var(--gold-dark) !important;
+  color: var(--green-dark) !important;
+  border-radius: 0.75rem;
+  text-decoration: none;
+}
+
+.logistics-vendor-card__call--primary:hover {
+  background: #e8c422 !important;
+}
+
+.app-shell--logistics-vendors .logistics-vendors__list {
+  padding-bottom: 0.5rem;
+}
+
 .storage-card--detail {
   margin-top: 0.5rem;
 }
@@ -4347,4 +4433,224 @@ h3,
 
 .app-shell {
   padding-bottom: 88px;
+}
+
+/* —— Simple farmer-first UI —— */
+.app-shell--simple .chip--tap {
+  min-height: 48px;
+  padding: 0.55rem 0.85rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.farmer-shortcuts__chips--lg {
+  gap: 0.45rem;
+}
+
+.farmer-shortcuts__heading {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--green-dark);
+  margin-bottom: 0.5rem;
+}
+
+.farmer-shortcuts__field-label {
+  font-size: 0.88rem;
+  font-weight: 700;
+  margin: 0.5rem 0 0.35rem;
+}
+
+.farmer-voice--simple .farmer-voice__mic--lg {
+  width: 56px;
+  height: 56px;
+}
+
+.farmer-voice__type-toggle {
+  display: block;
+  width: 100%;
+  margin-top: 0.35rem;
+  padding: 0.5rem;
+  border: none;
+  background: transparent;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--green-mid);
+  text-decoration: underline;
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.input-area--simple {
+  min-height: 3.5rem;
+  font-size: 1rem;
+}
+
+.phone-frame--pro .phone-frame__screen {
+  gap: 0.65rem;
+}
+
+.simple-hero-strip {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.45rem;
+  margin-bottom: 0.65rem;
+}
+
+.simple-hero-strip__item {
+  background: #fff;
+  border-radius: 0.75rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid #d4e8da;
+}
+
+.simple-hero-strip__item--gold {
+  border-color: var(--gold-dark);
+  background: #fffbeb;
+}
+
+.simple-hero-strip__lbl {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #5a6b62;
+  margin-bottom: 0.15rem;
+}
+
+.simple-hero-strip__item strong {
+  font-size: 1.15rem;
+  color: var(--green-dark);
+}
+
+.pro-card--simple {
+  padding: 0.75rem;
+}
+
+.pro-card__title-simple {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--green-dark);
+}
+
+.pro-checklist--simple {
+  gap: 0.35rem;
+}
+
+.pro-checklist--simple li {
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding-left: 0;
+}
+
+.pro-checklist--simple li::before {
+  content: "• ";
+  color: var(--green-mid);
+}
+
+.route-show-map--simple {
+  font-size: 0.72rem;
+  padding: 0.4rem 0.55rem;
+}
+
+.distress-card-simple {
+  background: #e8f5ee;
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  border: 2px solid #a5d6a7;
+  text-align: center;
+}
+
+.distress-card-simple--alert {
+  background: #fff8e1;
+  border-color: #ffcc80;
+}
+
+.distress-card-simple__title {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--green-dark);
+}
+
+.distress-card-simple__amount {
+  margin: 0.25rem 0;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--green-dark);
+}
+
+.distress-card-simple__sub {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #5a6b62;
+}
+
+.finance-teaser--simple {
+  align-items: center;
+}
+
+.finance-teaser__line--big {
+  font-size: 1.35rem !important;
+  font-weight: 800;
+  color: var(--green-dark);
+}
+
+.finance-teaser__btn--lg {
+  min-height: 48px;
+  padding: 0.55rem 1rem !important;
+  font-size: 0.95rem !important;
+}
+
+.header-loc--simple {
+  margin-top: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.header-loc--simple .header-loc__title {
+  font-size: 0.82rem;
+}
+
+.predict-hero--simple {
+  padding: 0.85rem 1rem;
+}
+
+.predict-hero__title-simple {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.predict-hero__region-simple {
+  margin: 0.35rem 0 0;
+  font-size: 0.9rem;
+  color: #e8f5e9;
+}
+
+.predict-view--simple {
+  gap: 0.65rem;
+}
+
+.next-steps--simple .next-steps__list--simple .next-steps__text {
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.next-steps__cta--simple {
+  min-height: 50px;
+  font-size: 1rem;
+}
+
+.loan-hero--simple .loan-hero__amount {
+  font-size: 2rem;
+}
+
+.finance-how__disclaimer--solo {
+  text-align: center;
+  font-size: 0.75rem;
+  color: #7a8f84;
+  margin: 0.5rem 0 0;
+}
+
+.btn-primary {
+  min-height: 52px;
+  font-size: 1.05rem;
+  font-weight: 800;
 }
