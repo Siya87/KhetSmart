@@ -80,6 +80,7 @@ export default function App() {
     null
   );
   const [vendorsLoading, setVendorsLoading] = useState(false);
+  const [selectedVendor, setSelectedVendor] = useState<LogisticsVendor | null>(null);
 
   const loadPredict = useCallback(async () => {
     try {
@@ -156,6 +157,7 @@ export default function App() {
     try {
       const data = await consultFarmer(consultText, locationPayload, overrides);
       setResult(data);
+      setSelectedVendor(null);
       setParsePreview(null);
       setConfirmOverrides(null);
       setAwaitingConfirm(false);
@@ -372,6 +374,11 @@ export default function App() {
               <LogisticsVendorsPanel
                 vendors={logisticsVendors}
                 recommendedId={logisticsMeta?.recommended_vendor_id}
+                selectedVendorId={selectedVendor?.id}
+                onSelectVendor={(v) => {
+                  setSelectedVendor(v);
+                  setShowLogisticsVendors(false);
+                }}
                 destinationName={logisticsMeta?.destination_name ?? result?.route.storage_name}
                 quantityQ={logisticsMeta?.quantity_quintals ?? result?.parsed.quantity_quintals ?? 50}
                 loading={vendorsLoading}
@@ -385,6 +392,7 @@ export default function App() {
               <FarmerConsultResults
                 result={result}
                 formatInr={formatInr}
+                selectedVendor={selectedVendor}
                 onViewFinance={() => setTab("finance")}
                 onShowAllVendors={handleShowAllVendors}
                 language={language}

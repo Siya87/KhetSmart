@@ -6,6 +6,8 @@ import { IconTruck } from "./icons";
 type Props = {
   vendors: LogisticsVendor[];
   recommendedId?: string | null;
+  selectedVendorId?: string | null;
+  onSelectVendor?: (vendor: LogisticsVendor) => void;
   destinationName?: string;
   quantityQ: number;
   routeDistanceKm?: number;
@@ -23,6 +25,8 @@ function shortName(name: string, max = 32) {
 export function LogisticsVendorsPanel({
   vendors,
   recommendedId,
+  selectedVendorId,
+  onSelectVendor,
   destinationName,
   quantityQ,
   loading = false,
@@ -75,12 +79,14 @@ export function LogisticsVendorsPanel({
         <div className="logistics-vendors__list">
           {vendors.map((v) => {
             const isRecommended = v.id === recommendedId;
+            const isSelected = v.id === selectedVendorId;
             const readyCount = v.vehicles_available;
 
             return (
               <article
                 key={v.id}
-                className={`logistics-vendor-card logistics-vendor-card--simple ${isRecommended ? "logistics-vendor-card--rec" : ""}`}
+                className={`logistics-vendor-card logistics-vendor-card--simple ${isRecommended ? "logistics-vendor-card--rec" : ""} ${isSelected ? "logistics-vendor-card--selected" : ""}`}
+                style={isSelected ? { border: "2px solid #3d8f5f" } : undefined}
               >
                 <div className="logistics-vendor-card__head">
                   <span className="logistics-vendor-card__icon" aria-hidden>
@@ -110,12 +116,52 @@ export function LogisticsVendorsPanel({
                   🚛 {vehicleSummary(v.vehicles, language)}
                 </p>
 
-                <a
-                  className="logistics-vendor-card__call logistics-vendor-card__call--primary"
-                  href={`tel:${v.phone.replace(/\s/g, "")}`}
-                >
-                  📞 {t.vendorsCall}
-                </a>
+                <div className="logistics-vendor-card__actions" style={{ display: "flex", gap: "8px", marginTop: "12px" }}>
+                  <button
+                    type="button"
+                    onClick={() => onSelectVendor?.(v)}
+                    className={`btn-select ${isSelected ? "btn-select--active" : ""}`}
+                    style={{
+                      flex: 1,
+                      padding: "8px 12px",
+                      borderRadius: "6px",
+                      border: isSelected ? "none" : "1px solid #e8b923",
+                      backgroundColor: isSelected ? "#3d8f5f" : "transparent",
+                      color: isSelected ? "#fff" : "#e8b923",
+                      fontWeight: "bold",
+                      cursor: "pointer",
+                      fontSize: "0.9rem",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "4px"
+                    }}
+                  >
+                    {isSelected ? `✓ ${t.selectedVendor || "Selected"}` : t.chooseVendor || "Select"}
+                  </button>
+
+                  <a
+                    className="logistics-vendor-card__call logistics-vendor-card__call--primary"
+                    href={`tel:${v.phone.replace(/\s/g, "")}`}
+                    style={{
+                      flex: 1,
+                      textAlign: "center",
+                      padding: "8px 12px",
+                      borderRadius: "6px",
+                      backgroundColor: "#1e293b",
+                      color: "#f8fafc",
+                      border: "none",
+                      fontSize: "0.9rem",
+                      fontWeight: "bold",
+                      textDecoration: "none",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center"
+                    }}
+                  >
+                    📞 {t.vendorsCall}
+                  </a>
+                </div>
               </article>
             );
           })}

@@ -59,7 +59,7 @@ def _score_candidate(
         * 100
     )
     glut_penalty = glut_risk_pct * 0.15 * profit
-    score = profit - glut_penalty + (100 - storage["utilization_pct"]) * 8 - distance_km * 12
+    score = profit - glut_penalty + (100 - storage["utilization_pct"]) * 8 - distance_km * 50
     return score, storage, distance_km, logistics, profit, nearest_market, util_after
 
 
@@ -97,6 +97,8 @@ def recommend_route(
         if storage["available_quintals"] < quantity_quintals:
             continue
         dist_h = _haversine_km(origin["lat"], origin["lng"], storage["lat"], storage["lng"])
+        if dist_h > 45.0:
+            continue
         prelim.append(
             _score_candidate(
                 storage, origin, quantity_quintals, markets, glut_risk_pct, dist_h
@@ -149,14 +151,15 @@ def recommend_route(
 
     if DEMO_MODE and 45 <= quantity_quintals <= 55 and "jyoti" in crop.lower():
         demo = next((s for s in storages if s["id"] == "CS-001"), storage)
-        storage = demo
-        dist, distance_source = driving_distance_km(
-            origin["lat"], origin["lng"], storage["lat"], storage["lng"]
-        )
-        logistics = _logistics_cost(quantity_quintals, dist)
-        market = next((m for m in markets if m["id"] == "MKT-001"), market)
-        profit = int(quantity_quintals * market["price_per_quintal"]) - logistics
-        why.append("DEMO_MODE: pitch anchor route enabled")
+        if _haversine_km(origin["lat"], origin["lng"], demo["lat"], demo["lng"]) <= 45.0:
+            storage = demo
+            dist, distance_source = driving_distance_km(
+                origin["lat"], origin["lng"], storage["lat"], storage["lng"]
+            )
+            logistics = _logistics_cost(quantity_quintals, dist)
+            market = next((m for m in markets if m["id"] == "MKT-001"), market)
+            profit = int(quantity_quintals * market["price_per_quintal"]) - logistics
+            why.append("DEMO_MODE: pitch anchor route enabled")
 
     reasoning = (
         f"OR optimizer across {len(storages)} live facilities; "

@@ -1,11 +1,11 @@
 {
-  "recorded_at": "2026-05-21T12:00:33.717220+00:00",
+  "recorded_at": "2026-05-21T15:13:16.499296+00:00",
   "vegetation": {
-    "ndvi": 0.436,
-    "savi": 0.2995,
-    "gndvi": 0.399,
-    "composite_index": 0.3594,
-    "detail": "NDVI 0.436 \u00b7 SAVI 0.299 (soil-adjusted early canopy) \u00b7 GNDVI 0.399 (chlorophyll / N proxy)"
+    "ndvi": 0.715,
+    "savi": 0.42,
+    "gndvi": 0.4,
+    "composite_index": 0.5548,
+    "detail": "NDVI 0.715 \u00b7 SAVI 0.420 (soil-adjusted early canopy) \u00b7 GNDVI 0.400 (chlorophyll / N proxy)"
   },
   "weather": {
     "ok": true,
@@ -13,9 +13,9 @@
     "temp_max_c_30d": 33.7,
     "temp_min_c_30d": 24.1,
     "temp_mean_c_30d": 28.4,
-    "precip_mm_14d": 49.0,
-    "precip_mm_7d": 7.4,
-    "solar_radiation_mj_m2_30d": 20.02,
+    "precip_mm_14d": 45.9,
+    "precip_mm_7d": 4.3,
+    "solar_radiation_mj_m2_30d": 20.07,
     "heat_stress_days_30d": 18,
     "drought_risk": false,
     "waterlogging_risk": false,
@@ -31,8 +31,8 @@
   },
   "moisture": {
     "ok": true,
-    "surface_moisture_m3_m3": 0.172,
-    "rootzone_moisture_m3_m3": 0.167,
+    "surface_moisture_m3_m3": 0.152,
+    "rootzone_moisture_m3_m3": 0.171,
     "rootzone_moisture_7d_avg": 0.171,
     "rootzone_moisture_30d_avg": 0.252,
     "depth_surface_cm": "0\u20137",
@@ -66,9 +66,9 @@
     "level": "moderate",
     "priority": "medium",
     "headline": "Moderate N deficiency (GNDVI)",
-    "recommendation": "GNDVI 0.399 in 0.38\u20130.43 band \u2014 consider side-dress 15\u201325 kg N/ha and verify with petiole nitrate if possible.",
-    "suggested_n_kg_per_ha": "15\u201325",
-    "gndvi": 0.399,
+    "recommendation": "GNDVI 0.400 in 0.38\u20130.43 band \u2014 consider side-dress 25\u201340 kg N/ha and verify with petiole nitrate if possible.",
+    "suggested_n_kg_per_ha": "25\u201340",
+    "gndvi": 0.4,
     "gndvi_band": "moderate",
     "thresholds": {
       "critical_below": 0.38,
@@ -78,7 +78,7 @@
     },
     "source": "GNDVI chlorophyll thresholds (potato corridor)"
   },
-  "satellite_source": "Sentinel-2 L2A \u00b7 Copernicus Data Space (NDVI+SAVI+GNDVI)",
-  "glut_risk_pct": 52,
-  "predicted_yield_million_quintals": 3.73
+  "satellite_source": "Storage + weather + soil (no satellite credentials)",
+  "glut_risk_pct": 45,
+  "predicted_yield_million_quintals": 4.27
 }
