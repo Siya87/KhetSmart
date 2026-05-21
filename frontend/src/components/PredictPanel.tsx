@@ -9,7 +9,6 @@ import { PredictHero } from "./PredictHero";
 import { PredictSignalsRow } from "./PredictSignalsRow";
 import { PredictNextSteps } from "./PredictNextSteps";
 import type { AppLanguage } from "../hooks/useAppSettings";
-import { tPredict } from "../i18n/farmerSimple";
 
 function friendlySource(satelliteSource: string) {
   if (satelliteSource.toLowerCase().includes("copernicus")) {
@@ -92,7 +91,6 @@ export function PredictPanel({ totalStorages, onGoNetwork, language = "bn" }: Pr
   const utilPct = yieldData.avg_storage_util_pct ?? 60;
   const critical = yieldData.storages_critical ?? 0;
 
-  const tp = tPredict(language);
   const simple = true;
 
   return (

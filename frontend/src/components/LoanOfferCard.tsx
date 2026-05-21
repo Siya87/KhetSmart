@@ -1,5 +1,7 @@
 import type { ConsultResponse } from "../api";
 import type { AppLanguage } from "../hooks/useAppSettings";
+import { tFinance } from "../i18n/financeSimple";
+import { isSimpleLang } from "../i18n/lang";
 import { IconRupee } from "./icons";
 
 type Props = {
@@ -16,7 +18,8 @@ export function LoanOfferCard({
   language = "bn",
 }: Props) {
   const { loan, parsed } = result;
-  const simple = language === "bn";
+  const t = tFinance(language);
+  const simple = isSimpleLang(language);
 
   return (
     <section
@@ -43,9 +46,7 @@ export function LoanOfferCard({
                 <span className="loan-hero__rate">@ {loan.interest_rate_pa}% p.a.</span>
               )}
             </div>
-            <span className="loan-hero__pill">
-              {language === "bn" ? "অনুমোদিত" : "Pre-approved"}
-            </span>
+            <span className="loan-hero__pill">{t.approved}</span>
           </div>
           <p className="loan-hero__bank">{loan.bank_partner}</p>
           <div className="finance-meta-chips">
@@ -60,11 +61,7 @@ export function LoanOfferCard({
           )}
         </>
       ) : (
-        <p className="hint pro-hint">
-          {language === "bn"
-            ? "এখন ঋণ নেই — ফার্মার ট্যাবে আবার চেষ্টা করুন"
-            : "No loan for current conditions. Update harvest on Farmer tab."}
-        </p>
+        <p className="hint pro-hint">{t.notApproved}</p>
       )}
     </section>
   );

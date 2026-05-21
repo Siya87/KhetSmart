@@ -2,7 +2,6 @@ import type { ConsultResponse } from "../api";
 import type { AppLanguage } from "../hooks/useAppSettings";
 import { glutLabelBnEn, tFarmer } from "../i18n/farmerSimple";
 import { DistressPriceCard } from "./DistressPriceCard";
-import { GlutGauge } from "./GlutGauge";
 import { RouteFlow } from "./RouteFlow";
 import { IconTruck } from "./icons";
 

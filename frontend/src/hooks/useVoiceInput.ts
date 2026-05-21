@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { AppLanguage } from "./useAppSettings";
+import { SPEECH_LANG } from "../i18n/lang";
 
 export type VoiceStatus = "idle" | "listening" | "unsupported" | "denied" | "error";
 
@@ -7,21 +9,45 @@ function getRecognitionCtor(): SpeechRecognitionConstructor | null {
   return window.SpeechRecognition ?? window.webkitSpeechRecognition ?? null;
 }
 
-export function useVoiceInput(onFinalText: (text: string) => void) {
+export function useVoiceInput(
+  onFinalText: (text: string) => void,
+  language: AppLanguage = "bn"
+) {
   const [status, setStatus] = useState<VoiceStatus>("idle");
   const [interim, setInterim] = useState("");
   const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const listeningRef = useRef(false);
+  const mountedRef = useRef(true);
+  const onFinalRef = useRef(onFinalText);
+
+  onFinalRef.current = onFinalText;
 
   const supported = getRecognitionCtor() != null;
 
-  const stop = useCallback(() => {
+  const releaseRecognition = useCallback(() => {
+    const rec = recognitionRef.current;
+    recognitionRef.current = null;
     listeningRef.current = false;
-    recognitionRef.current?.stop();
-    setStatus("idle");
-    setInterim("");
+    if (!rec) return;
+    try {
+      rec.abort();
+    } catch {
+      try {
+        rec.stop();
+      } catch {
+        /* ignore — already stopped */
+      }
+    }
   }, []);
+
+  const stop = useCallback(() => {
+    releaseRecognition();
+    if (mountedRef.current) {
+      setStatus("idle");
+      setInterim("");
+    }
+  }, [releaseRecognition]);
 
   const start = useCallback(() => {
     const Ctor = getRecognitionCtor();
@@ -36,13 +62,28 @@ export function useVoiceInput(onFinalText: (text: string) => void) {
       return;
     }
 
+    releaseRecognition();
+
     const recognition = new Ctor();
     recognition.continuous = false;
     recognition.interimResults = true;
-    recognition.lang = "bn-IN";
+    recognition.lang = SPEECH_LANG[language];
     recognition.maxAlternatives = 1;
 
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
+    (recognition as SpeechRecognition & { onstart?: () => void }).onstart = () => {
+      if (!mountedRef.current) {
+        try {
+          recognition.abort();
+        } catch {
+          /* ignore */
+        }
+        return;
+      }
+      listeningRef.current = true;
+      setStatus("listening");
+    };
+
+    recognition.onresult = (event) => {
       let interimText = "";
       let finalText = "";
       for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -54,15 +95,18 @@ export function useVoiceInput(onFinalText: (text: string) => void) {
         }
       }
       if (finalText.trim()) {
-        onFinalText(finalText.trim());
+        onFinalRef.current(finalText.trim());
         setInterim("");
       } else {
         setInterim(interimText);
       }
     };
 
-    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+    recognition.onerror = (event) => {
       listeningRef.current = false;
+      if (event.error === "aborted") {
+        return;
+      }
       if (event.error === "not-allowed" || event.error === "service-not-allowed") {
         setStatus("denied");
         setError("Microphone blocked — allow mic in browser settings.");
@@ -77,30 +121,54 @@ export function useVoiceInput(onFinalText: (text: string) => void) {
 
     recognition.onend = () => {
       listeningRef.current = false;
-      setStatus((s) => (s === "listening" ? "idle" : s));
-      setInterim("");
+      if (recognitionRef.current === recognition) {
+        recognitionRef.current = null;
+      }
+      if (mountedRef.current) {
+        setStatus((s) => (s === "listening" ? "idle" : s));
+        setInterim("");
+      }
     };
 
     recognitionRef.current = recognition;
-    listeningRef.current = true;
     setError(null);
-    setStatus("listening");
     setInterim("");
+
     try {
       recognition.start();
     } catch {
-      setStatus("error");
-      setError("Could not start microphone.");
+      recognitionRef.current = null;
       listeningRef.current = false;
+      setStatus("error");
+      setError("Could not start microphone — wait a moment and try again.");
     }
-  }, [onFinalText, stop]);
+  }, [language, releaseRecognition, stop]);
 
   useEffect(() => {
+    mountedRef.current = true;
     if (!supported) setStatus("unsupported");
     return () => {
-      recognitionRef.current?.abort();
+      mountedRef.current = false;
+      releaseRecognition();
     };
-  }, [supported]);
+  }, [supported, releaseRecognition]);
+
+  useEffect(() => {
+    function onUnhandledRejection(ev: PromiseRejectionEvent) {
+      const reason = ev.reason;
+      const name = reason?.name ?? "";
+      const message = String(reason?.message ?? reason ?? "");
+      if (
+        name === "AbortError" &&
+        message.includes("play()") &&
+        message.includes("pause()")
+      ) {
+        ev.preventDefault();
+      }
+    }
+    window.addEventListener("unhandledrejection", onUnhandledRejection);
+    return () => window.removeEventListener("unhandledrejection", onUnhandledRejection);
+  }, []);
 
   return {
     supported,

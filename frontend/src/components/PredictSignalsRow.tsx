@@ -42,7 +42,7 @@ export function PredictSignalsRow({
             <div className="predict-mini__fill" style={{ width: `${Math.min(100, utilPct)}%` }} />
           </div>
           <span className="predict-mini__sub">
-            <strong>{utilPct}%</strong> · {critical} {language === "bn" ? "ভর্তি" : "full"}
+            <strong>{utilPct}%</strong> · {critical} {tp.storageFull}
           </span>
         </article>
       </div>

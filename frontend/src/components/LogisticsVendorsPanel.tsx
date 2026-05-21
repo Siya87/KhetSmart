@@ -55,7 +55,7 @@ export function LogisticsVendorsPanel({
             {t.vendorsTitle}
           </h2>
           <p className="logistics-vendors__sub">
-            {quantityQ} {language === "bn" ? "কুইন্টাল" : "q"}
+            {quantityQ} {t.unitQuintal}
             {destinationName ? ` → ${shortName(destinationName, 28)}` : ""}
           </p>
         </div>

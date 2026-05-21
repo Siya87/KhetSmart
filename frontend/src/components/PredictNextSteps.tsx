@@ -18,6 +18,12 @@ function simpleActions(lang: AppLanguage, alert: string): string[] {
     }
     return ["ফার্মার ট্যাবে রুট + ঋণ দেখুন", "ম্যাপে খালি স্টোরেজ খুঁজুন"];
   }
+  if (lang === "hi") {
+    if (alert === "HIGH") {
+      return ["पहले कोल्ड स्टोरेज बुक करें", "किसान टैब पर रास्ता देखें"];
+    }
+    return ["किसान टैब पर रास्ता + ऋण", "मैप पर खाली स्टोरेज खोजें"];
+  }
   if (alert === "HIGH") {
     return ["Book cold storage early", "Check route on Farmer tab"];
   }

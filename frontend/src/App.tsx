@@ -32,16 +32,16 @@ import { LocationPermissionModal } from "./components/LocationPermissionModal";
 import { IconMic, IconRupee, IconSatellite, IconWarehouse } from "./components/icons";
 import { useAppSettings } from "./hooks/useAppSettings";
 import { useFarmerLocation } from "./hooks/useFarmerLocation";
-import { tFarmer } from "./i18n/farmerSimple";
+import { tFarmer, tNav } from "./i18n/farmerSimple";
 
 type Tab = "farmer" | "predict" | "network" | "finance";
 
-const TABS: { id: Tab; label: string; icon: ReactNode }[] = [
-  { id: "farmer", label: "Farmer", icon: <IconMic className="tab-icon" /> },
-  { id: "predict", label: "Predict", icon: <IconSatellite className="tab-icon" /> },
-  { id: "network", label: "Network", icon: <IconWarehouse className="tab-icon" /> },
-  { id: "finance", label: "Finance", icon: <IconRupee className="tab-icon" /> },
-];
+const TAB_ICONS: Record<Tab, ReactNode> = {
+  farmer: <IconMic className="tab-icon" />,
+  predict: <IconSatellite className="tab-icon" />,
+  network: <IconWarehouse className="tab-icon" />,
+  finance: <IconRupee className="tab-icon" />,
+};
 
 function formatInr(n: number) {
   return new Intl.NumberFormat("en-IN", {
@@ -239,6 +239,7 @@ export default function App() {
   }
 
   const tf = tFarmer(language);
+  const nav = tNav(language);
 
   return (
     <div
@@ -444,7 +445,14 @@ export default function App() {
       />
 
       <nav className="tabs tabs--4" aria-label="Main navigation">
-        {TABS.map((t) => (
+        {(
+          [
+            { id: "farmer" as const, label: nav.farmer },
+            { id: "predict" as const, label: nav.predict },
+            { id: "network" as const, label: nav.network },
+            { id: "finance" as const, label: nav.finance },
+          ] as const
+        ).map((t) => (
           <button
             key={t.id}
             type="button"
@@ -454,7 +462,7 @@ export default function App() {
               setTab(t.id);
             }}
           >
-            {t.icon}
+            {TAB_ICONS[t.id]}
             {t.label}
           </button>
         ))}

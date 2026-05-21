@@ -15,6 +15,8 @@ from ingest.ingest_ndvi import ingest_ndvi
 from services.finance import evaluate_loan
 from services.price_compare import build_price_comparison
 from services.nlp_parser import needs_confirmation, parse_farmer_message
+from services.auction import list_auctions
+from services.insurance import list_insurance_offers
 from services.logistics_vendors import list_logistics_vendors
 from services.router import recommend_route
 from services.storage_repo import list_storages, update_storage_utilization, count_storages
@@ -219,6 +221,32 @@ def get_storages(
     return list_storages(db, for_map=for_map)
 
 
+@app.get("/api/finance/insurance")
+def get_insurance_offers(
+    quantity_quintals: float = Query(50, ge=1, le=10000),
+    glut_risk_pct: float = Query(50, ge=0, le=100),
+    crop: str = Query("Potato"),
+):
+    return list_insurance_offers(
+        quantity_quintals=quantity_quintals,
+        glut_risk_pct=glut_risk_pct,
+        crop=crop,
+    )
+
+
+@app.get("/api/finance/auctions")
+def get_auctions(
+    crop: str = Query("Potato"),
+    district: str | None = Query(None),
+    quantity_quintals: float | None = Query(None),
+):
+    return list_auctions(
+        crop=crop,
+        district=district,
+        farmer_quantity_quintals=quantity_quintals,
+    )
+
+
 @app.get("/api/logistics/vendors")
 def get_logistics_vendors(
     quantity_quintals: float = Query(50, ge=1, le=10000),
@@ -403,6 +431,7 @@ def farmer_consult(body: ConsultRequest, db: Session = Depends(get_db)):
             "approved": loan.approved,
             "amount_inr": loan.amount_inr,
             "interest_rate_pa": loan.interest_rate_pa,
+            "tenure_days": loan.tenure_days,
             "bank_partner": loan.bank_partner,
             "grn_id": loan.grn_id,
             "trigger_reason": loan.trigger_reason,

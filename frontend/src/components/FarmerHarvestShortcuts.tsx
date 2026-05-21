@@ -18,12 +18,18 @@ export const DEFAULT_HARVEST_SELECTION: ConsultOverrides = {
   district: null,
 };
 
-const CROP_LABEL: Record<string, { en: string; bn: string }> = {
-  "Jyoti Potato": { en: "Jyoti potato", bn: "জ্যোতি আলু" },
-  Potato: { en: "Potato", bn: "আলু" },
-  "Chipsona-1": { en: "Chipsona", bn: "চিপসোনা" },
-  "Kufri Jyoti": { en: "Kufri Jyoti", bn: "কুফরি জ্যোতি" },
+const CROP_LABEL: Record<string, { en: string; bn: string; hi: string }> = {
+  "Jyoti Potato": { en: "Jyoti potato", bn: "জ্যোতি আলু", hi: "ज्योति आलू" },
+  Potato: { en: "Potato", bn: "আলু", hi: "आलू" },
+  "Chipsona-1": { en: "Chipsona", bn: "চিপসোনা", hi: "चिपसोना" },
+  "Kufri Jyoti": { en: "Kufri Jyoti", bn: "কুফরি জ্যোতি", hi: "कुफरी ज्योति" },
 };
+
+function cropLabel(crop: string, language: AppLanguage): string {
+  const row = CROP_LABEL[crop];
+  if (!row) return crop;
+  return row[language];
+}
 
 export function harvestShortcutText(selection: ConsultOverrides): string {
   const cropLabel =
@@ -63,7 +69,7 @@ export function FarmerHarvestShortcuts({
             className={`chip chip--tap ${selection.quantity_quintals === q ? "chip--gold" : "chip--outline"}`}
             onClick={() => onChange({ ...selection, quantity_quintals: q })}
           >
-            {q} {language === "bn" ? "কুই" : "q"}
+            {q} {t.unitQuintal}
           </button>
         ))}
       </div>
@@ -78,7 +84,7 @@ export function FarmerHarvestShortcuts({
             className={`chip chip--tap ${selection.crop === crop ? "chip--gold" : "chip--outline"}`}
             onClick={() => onChange({ ...selection, crop })}
           >
-            {language === "bn" ? CROP_LABEL[crop].bn : CROP_LABEL[crop].en}
+            {cropLabel(crop, language)}
           </button>
         ))}
         {!showMoreCrops ? (
@@ -99,7 +105,7 @@ export function FarmerHarvestShortcuts({
               className={`chip chip--tap ${selection.crop === crop ? "chip--gold" : "chip--outline"}`}
               onClick={() => onChange({ ...selection, crop })}
             >
-              {language === "bn" ? CROP_LABEL[crop].bn : CROP_LABEL[crop].en}
+              {cropLabel(crop, language)}
             </button>
           ))
         )}

@@ -66,10 +66,57 @@ export interface ConsultResponse {
     approved: boolean;
     amount_inr: number;
     interest_rate_pa: number;
+    tenure_days?: number;
     bank_partner: string;
     grn_id: string;
     trigger_reason: string;
   };
+}
+
+export interface InsurancePlan {
+  id: string;
+  name_en: string;
+  name_bn: string;
+  name_hi?: string;
+  type: string;
+  premium_inr: number;
+  coverage_inr: number;
+  provider: string;
+  phone: string;
+  highlights_bn: string[];
+  highlights_en: string[];
+  highlights_hi?: string[];
+  quantity_quintals: number;
+  recommended: boolean;
+}
+
+export interface InsuranceOffersResponse {
+  plans: InsurancePlan[];
+  quantity_quintals: number;
+  crop: string;
+  recommended_plan_id: string | null;
+}
+
+export interface MandiAuction {
+  id: string;
+  mandi_name: string;
+  district: string;
+  crop: string;
+  quantity_quintals: number;
+  grade: string;
+  start_price_per_quintal: number;
+  current_bid_per_quintal: number;
+  bidders: number;
+  ends_in_hours: number;
+  status: "live" | "upcoming" | string;
+}
+
+export interface AuctionsResponse {
+  auctions: MandiAuction[];
+  live_count: number;
+  crop: string;
+  best_match_id: string | null;
+  farmer_quantity_quintals: number | null;
 }
 
 export interface YieldForecast {
@@ -313,6 +360,36 @@ export async function fetchLogisticsVendors(params: {
   if (params.destination_name) q.set("destination_name", params.destination_name);
   const res = await fetch(`/api/logistics/vendors?${q}`);
   if (!res.ok) throw new Error("Logistics vendors fetch failed");
+  return res.json();
+}
+
+export async function fetchInsuranceOffers(params: {
+  quantity_quintals: number;
+  glut_risk_pct: number;
+  crop?: string;
+}): Promise<InsuranceOffersResponse> {
+  const q = new URLSearchParams();
+  q.set("quantity_quintals", String(params.quantity_quintals));
+  q.set("glut_risk_pct", String(params.glut_risk_pct));
+  if (params.crop) q.set("crop", params.crop);
+  const res = await fetch(`/api/finance/insurance?${q}`);
+  if (!res.ok) throw new Error("Insurance fetch failed");
+  return res.json();
+}
+
+export async function fetchAuctions(params?: {
+  crop?: string;
+  district?: string;
+  quantity_quintals?: number;
+}): Promise<AuctionsResponse> {
+  const q = new URLSearchParams();
+  if (params?.crop) q.set("crop", params.crop);
+  if (params?.district) q.set("district", params.district);
+  if (params?.quantity_quintals != null) {
+    q.set("quantity_quintals", String(params.quantity_quintals));
+  }
+  const res = await fetch(`/api/finance/auctions?${q}`);
+  if (!res.ok) throw new Error("Auctions fetch failed");
   return res.json();
 }
 

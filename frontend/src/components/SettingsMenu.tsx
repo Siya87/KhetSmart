@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { AppFontSize, AppLanguage } from "../hooks/useAppSettings";
+import { languageMenuLabel } from "../i18n/lang";
 
 type Panel = "menu" | "language" | "font";
 
@@ -22,6 +23,7 @@ const LABELS = {
     back: "Back",
     english: "English",
     bengali: "বাংলা (Bengali)",
+    hindi: "हिन्दी (Hindi)",
     small: "Small",
     medium: "Medium",
     large: "Large",
@@ -35,10 +37,25 @@ const LABELS = {
     back: "ফিরে যান",
     english: "English",
     bengali: "বাংলা",
+    hindi: "हिन्दी",
     small: "ছোট",
     medium: "মাঝারি",
     large: "বড়",
     opsHint: "স্টোরেজ ও অ্যাডমিন টুল",
+  },
+  hi: {
+    settings: "सेटिंग्स",
+    language: "भाषा",
+    ops: "ऑपरेशन",
+    fontSize: "अक्षर का आकार",
+    back: "वापस",
+    english: "English",
+    bengali: "বাংলা",
+    hindi: "हिन्दी",
+    small: "छोटा",
+    medium: "मध्यम",
+    large: "बड़ा",
+    opsHint: "स्टोरेज और एडमिन टूल",
   },
 } as const;
 
@@ -119,7 +136,13 @@ export function SettingsMenu({
                 </span>
                 <span className="settings-menu__item-text">
                   <strong>{t.language}</strong>
-                  <small>{language === "bn" ? t.bengali : t.english}</small>
+                  <small>
+                    {languageMenuLabel(language, {
+                      english: t.english,
+                      bengali: t.bengali,
+                      hindi: t.hindi,
+                    })}
+                  </small>
                 </span>
                 <span className="settings-menu__chevron" aria-hidden>
                   ›
@@ -181,6 +204,7 @@ export function SettingsMenu({
               [
                 ["en", t.english],
                 ["bn", t.bengali],
+                ["hi", t.hindi],
               ] as const
             ).map(([code, label]) => (
               <button

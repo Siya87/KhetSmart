@@ -48,7 +48,7 @@ export function DistressPriceCard({
         <p className="distress-card-simple__title">{t.betterPrice}</p>
         <p className="distress-card-simple__amount">+{formatInr(uplift)}</p>
         <p className="distress-card-simple__sub">
-          {quantityQ} q · {language === "bn" ? "বিপন্ন বিক্রি নয়" : "not distress sell"}
+          {quantityQ} q · {t.notDistressSell}
         </p>
       </article>
     );
