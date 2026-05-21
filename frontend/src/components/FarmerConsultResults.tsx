@@ -85,7 +85,7 @@ function FarmerConsultResults({
               onClick={onShowAllVendors}
             >
               <span className="route-show-map__icon" aria-hidden>
-                🏭
+                🚛
               </span>
               Show all vendors
             </button>

@@ -2,12 +2,15 @@ import { useCallback, useEffect, useState, type ReactNode } from "react";
 import {
   consultFarmer,
   fetchHealth,
+  fetchLogisticsVendors,
   fetchStorages,
   parseFarmerText,
   type ConsultOverrides,
   type ConsultResponse,
   type ColdStorage,
   type FarmerParseResult,
+  type LogisticsVendor,
+  type LogisticsVendorsResponse,
 } from "./api";
 import { FinancePanel } from "./components/FinancePanel";
 import { OpsOverlay } from "./components/OpsOverlay";
@@ -16,8 +19,8 @@ import { FarmerConsultResults } from "./components/FarmerConsultResults";
 import { PredictPanel } from "./components/PredictPanel";
 import { SelectedStorageCard } from "./components/SelectedStorageCard";
 import { StorageMap, type RoutePath } from "./components/StorageMap";
-import { ColdStorageVendorsList } from "./components/ColdStorageVendorsList";
 import { FarmerHeaderLocation } from "./components/FarmerHeaderLocation";
+import { LogisticsVendorsPanel } from "./components/LogisticsVendorsPanel";
 import { FarmerParseConfirm } from "./components/FarmerParseConfirm";
 import {
   DEFAULT_HARVEST_SELECTION,
@@ -69,9 +72,12 @@ export default function App() {
   const { language, fontSize, setLanguage, setFontSize } = useAppSettings();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [opsOpen, setOpsOpen] = useState(false);
-  const [mapFocusKey, setMapFocusKey] = useState(0);
-  const [showAllVendors, setShowAllVendors] = useState(false);
-  const [allVendors, setAllVendors] = useState<ColdStorage[]>([]);
+  const [mapFocusKey] = useState(0);
+  const [showLogisticsVendors, setShowLogisticsVendors] = useState(false);
+  const [logisticsVendors, setLogisticsVendors] = useState<LogisticsVendor[]>([]);
+  const [logisticsMeta, setLogisticsMeta] = useState<LogisticsVendorsResponse | null>(
+    null
+  );
   const [vendorsLoading, setVendorsLoading] = useState(false);
 
   const loadPredict = useCallback(async () => {
@@ -129,10 +135,9 @@ export default function App() {
         }
       : null;
 
-  const vendorSource = showAllVendors && allVendors.length > 0 ? allVendors : storages;
   const selectedStorage =
-    vendorSource.find((s) => s.id === selectedStorageId) ??
-    vendorSource.find((s) => s.name === result?.route.storage_name) ??
+    storages.find((s) => s.id === selectedStorageId) ??
+    storages.find((s) => s.name === result?.route.storage_name) ??
     null;
 
   const locationPayload = farmerLocation.coords
@@ -153,6 +158,7 @@ export default function App() {
       setParsePreview(null);
       setConfirmOverrides(null);
       setAwaitingConfirm(false);
+      setShowLogisticsVendors(false);
     } catch {
       setError("Could not reach KhetSmart API. Run: uvicorn main:app --reload");
     } finally {
@@ -208,26 +214,33 @@ export default function App() {
 
   async function handleShowAllVendors() {
     if (!result?.route) return;
+    setShowLogisticsVendors(true);
     setVendorsLoading(true);
     setError(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
     try {
-      const vendors = await fetchStorages(false);
-      setAllVendors(vendors);
-      setShowAllVendors(true);
-      if (result.route.storage_id) {
-        setSelectedStorageId(result.route.storage_id);
-      }
-      setTab("network");
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      const data = await fetchLogisticsVendors({
+        quantity_quintals: result.parsed.quantity_quintals,
+        farmer_lat: farmerLocation.coords?.lat,
+        farmer_lng: farmerLocation.coords?.lng,
+        destination_lat: result.route.storage_lat,
+        destination_lng: result.route.storage_lng,
+        destination_name: result.route.storage_name,
+      });
+      setLogisticsVendors(data.vendors);
+      setLogisticsMeta(data);
     } catch {
-      setError("Could not load cold storage vendors. Start API on port 8000.");
+      setShowLogisticsVendors(false);
+      setError("Could not load transport vendors. Start API on port 8000.");
     } finally {
       setVendorsLoading(false);
     }
   }
 
   return (
-    <div className="app-shell">
+    <div
+      className={`app-shell${showLogisticsVendors && tab === "farmer" ? " app-shell--logistics-vendors" : ""}`}
+    >
       <LocationPermissionModal
         open={farmerLocation.showModal}
         status={
@@ -283,60 +296,62 @@ export default function App() {
 
         {tab === "farmer" && (
           <div className="farmer-view">
-            <div className="phone-frame phone-frame--pro">
-              <div className="phone-frame__screen">
-                <FarmerVoiceInput
-                  value={text}
-                  onChange={handleTextChange}
-                  disabled={loading}
-                  inputError={inputError}
-                />
-                <FarmerHarvestShortcuts
-                  selection={
-                    awaitingConfirm && confirmOverrides
-                      ? confirmOverrides
-                      : harvestSelection
-                  }
-                  onChange={
-                    awaitingConfirm && confirmOverrides
-                      ? (next) => {
-                          setConfirmOverrides(next);
-                          setHarvestSelection(next);
-                        }
-                      : handleHarvestChange
-                  }
-                  disabled={loading}
-                />
-                {awaitingConfirm && parsePreview && confirmOverrides && (
-                  <FarmerParseConfirm
-                    preview={parsePreview}
-                    overrides={confirmOverrides}
-                    onConfirm={() => runConsult(confirmOverrides)}
-                    onCancel={handleCancelConfirm}
-                    loading={loading}
-                  />
-                )}
-                {!awaitingConfirm && (
-                  <button
-                    type="button"
-                    className="btn-primary"
-                    onClick={handleGetRoute}
+            {!showLogisticsVendors && (
+              <div className="phone-frame phone-frame--pro">
+                <div className="phone-frame__screen">
+                  <FarmerVoiceInput
+                    value={text}
+                    onChange={handleTextChange}
                     disabled={loading}
-                  >
-                    {loading ? (
-                      <span className="btn-loading">
-                        <span className="spinner" />
-                        Checking…
-                      </span>
-                    ) : (
-                      "Get Route + Micro-loan"
-                    )}
-                  </button>
-                )}
+                    inputError={inputError}
+                  />
+                  <FarmerHarvestShortcuts
+                    selection={
+                      awaitingConfirm && confirmOverrides
+                        ? confirmOverrides
+                        : harvestSelection
+                    }
+                    onChange={
+                      awaitingConfirm && confirmOverrides
+                        ? (next) => {
+                            setConfirmOverrides(next);
+                            setHarvestSelection(next);
+                          }
+                        : handleHarvestChange
+                    }
+                    disabled={loading}
+                  />
+                  {awaitingConfirm && parsePreview && confirmOverrides && (
+                    <FarmerParseConfirm
+                      preview={parsePreview}
+                      overrides={confirmOverrides}
+                      onConfirm={() => runConsult(confirmOverrides)}
+                      onCancel={handleCancelConfirm}
+                      loading={loading}
+                    />
+                  )}
+                  {!awaitingConfirm && (
+                    <button
+                      type="button"
+                      className="btn-primary"
+                      onClick={handleGetRoute}
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <span className="btn-loading">
+                          <span className="spinner" />
+                          Checking…
+                        </span>
+                      ) : (
+                        "Get Route + Micro-loan"
+                      )}
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
 
-            {loading && (
+            {loading && !showLogisticsVendors && (
               <div className="loading-cards">
                 <div className="skeleton skeleton--tall" />
                 <div className="skeleton" />
@@ -344,7 +359,20 @@ export default function App() {
               </div>
             )}
 
-            {result && !loading && (
+            {showLogisticsVendors && (
+              <LogisticsVendorsPanel
+                vendors={logisticsVendors}
+                recommendedId={logisticsMeta?.recommended_vendor_id}
+                destinationName={logisticsMeta?.destination_name ?? result?.route.storage_name}
+                quantityQ={logisticsMeta?.quantity_quintals ?? result?.parsed.quantity_quintals ?? 50}
+                routeDistanceKm={logisticsMeta?.route_distance_km ?? result?.route.distance_km}
+                loading={vendorsLoading}
+                onBack={() => setShowLogisticsVendors(false)}
+                formatInr={formatInr}
+              />
+            )}
+
+            {result && !loading && !showLogisticsVendors && (
               <FarmerConsultResults
                 result={result}
                 formatInr={formatInr}
@@ -374,45 +402,26 @@ export default function App() {
         {tab === "network" && (
           <div className="network-view animate-in">
             <section className="visual-card">
-              <h3>
-                {showAllVendors
-                  ? `${allVendors.length} cold storage vendors`
-                  : `${totalStorages} cold storages · live network`}
-              </h3>
+              <h3>{totalStorages} cold storages · live network</h3>
               <StorageMap
-                storages={showAllVendors ? allVendors : storages}
-                totalCount={showAllVendors ? allVendors.length : totalStorages}
+                storages={storages}
+                totalCount={totalStorages}
                 highlight={result?.route.storage_name}
-                routePath={showAllVendors ? null : routePath}
+                routePath={routePath}
                 selectedId={selectedStorageId}
-                focusRouteKey={showAllVendors ? 0 : mapFocusKey}
+                focusRouteKey={mapFocusKey}
                 onSelect={(s) => setSelectedStorageId(s.id)}
               />
             </section>
 
-            {vendorsLoading && (
-              <p className="network-hint">Loading all vendors…</p>
-            )}
-
-            {showAllVendors && allVendors.length > 0 && !vendorsLoading && (
-              <ColdStorageVendorsList
-                storages={allVendors}
-                recommendedName={result?.route.storage_name}
-                recommendedId={result?.route.storage_id}
-                selectedId={selectedStorageId}
-                onSelect={(s) => setSelectedStorageId(s.id)}
+            {selectedStorage ? (
+              <SelectedStorageCard
+                storage={selectedStorage}
+                isRouteTarget={result?.route.storage_name === selectedStorage.name}
               />
+            ) : (
+              <p className="network-hint">Tap a pin on the map to see facility details.</p>
             )}
-
-            {!showAllVendors &&
-              (selectedStorage ? (
-                <SelectedStorageCard
-                  storage={selectedStorage}
-                  isRouteTarget={result?.route.storage_name === selectedStorage.name}
-                />
-              ) : (
-                <p className="network-hint">Tap a pin on the map to see facility details.</p>
-              ))}
           </div>
         )}
 
@@ -431,7 +440,7 @@ export default function App() {
             type="button"
             className={`tab-btn ${tab === t.id ? "active" : ""}`}
             onClick={() => {
-              if (t.id !== "network") setShowAllVendors(false);
+              if (t.id !== "farmer") setShowLogisticsVendors(false);
               setTab(t.id);
             }}
           >

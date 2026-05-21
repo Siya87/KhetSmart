@@ -199,6 +199,38 @@ export interface ColdStorage {
   utilization_pct: number;
 }
 
+export interface LogisticsVehicle {
+  type: string;
+  capacity_quintals: number;
+  available: number;
+  plate: string;
+}
+
+export interface LogisticsVendor {
+  id: string;
+  name: string;
+  district: string;
+  phone: string;
+  rating: number;
+  services: string[];
+  vehicles: LogisticsVehicle[];
+  pickup_distance_km: number;
+  route_distance_km: number;
+  estimated_quote_inr: number;
+  vehicles_available: number;
+  max_capacity_quintals: number;
+  can_carry_load: boolean;
+  destination_name?: string | null;
+}
+
+export interface LogisticsVendorsResponse {
+  vendors: LogisticsVendor[];
+  recommended_vendor_id: string | null;
+  quantity_quintals: number;
+  destination_name: string | null;
+  route_distance_km: number;
+}
+
 export async function parseFarmerText(text: string): Promise<FarmerParseResult> {
   const res = await fetch("/api/nlp/parse", {
     method: "POST",
@@ -257,6 +289,30 @@ export async function fetchYield(): Promise<YieldForecast> {
 export async function fetchStorages(forMap = false): Promise<ColdStorage[]> {
   const res = await fetch(`/api/storages?for_map=${forMap}`);
   if (!res.ok) throw new Error("Storages fetch failed");
+  return res.json();
+}
+
+export async function fetchLogisticsVendors(params: {
+  quantity_quintals: number;
+  farmer_lat?: number;
+  farmer_lng?: number;
+  destination_lat?: number;
+  destination_lng?: number;
+  destination_name?: string;
+}): Promise<LogisticsVendorsResponse> {
+  const q = new URLSearchParams();
+  q.set("quantity_quintals", String(params.quantity_quintals));
+  if (params.farmer_lat != null) q.set("farmer_lat", String(params.farmer_lat));
+  if (params.farmer_lng != null) q.set("farmer_lng", String(params.farmer_lng));
+  if (params.destination_lat != null) {
+    q.set("destination_lat", String(params.destination_lat));
+  }
+  if (params.destination_lng != null) {
+    q.set("destination_lng", String(params.destination_lng));
+  }
+  if (params.destination_name) q.set("destination_name", params.destination_name);
+  const res = await fetch(`/api/logistics/vendors?${q}`);
+  if (!res.ok) throw new Error("Logistics vendors fetch failed");
   return res.json();
 }
 

@@ -2674,56 +2674,296 @@ h3,
   margin: 0;
 }
 
-.vendors-panel {
-  margin-top: 0.75rem;
-  padding: 0.65rem 0.5rem 0.25rem;
-  border-radius: 0.85rem;
-  background: #f4faf6;
-  border: 1px solid #d4e8da;
+.app-shell--logistics-vendors {
+  background: linear-gradient(180deg, var(--green-dark) 0 168px, var(--cream) 168px 100%);
 }
 
-.vendors-panel__head {
-  padding: 0 0.35rem 0.55rem;
+.app-shell--logistics-vendors .main {
+  padding-top: 0.35rem;
 }
 
-.vendors-panel__eyebrow {
-  display: block;
-  font-size: 0.62rem;
+.logistics-vendors {
+  margin-top: 0.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.logistics-vendors__banner {
+  position: relative;
+  z-index: 2;
+  margin: 0;
+  padding: 0.85rem 0.95rem 1rem;
+  border-radius: 1rem;
+  background: #fff;
+  border: 2px solid rgba(26, 61, 46, 0.12);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.logistics-vendors__banner::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--green-mid), var(--gold), var(--green-light));
+}
+
+.logistics-vendors__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.65rem;
+  min-height: 44px;
+  padding: 0.45rem 0.85rem;
+  border: 2px solid #b8d4c4;
+  border-radius: 999px;
+  background: #e8f5ee;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--green-dark);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+
+.logistics-vendors__back:hover {
+  background: #d4edd9;
+  border-color: var(--green-mid);
+}
+
+.logistics-vendors__back:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.logistics-vendors__back-icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.logistics-vendors__banner-body {
+  padding-top: 0.1rem;
+}
+
+.logistics-vendors__eyebrow {
+  display: inline-block;
+  font-size: 0.65rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #7a8f84;
+  letter-spacing: 0.08em;
+  color: var(--green-dark);
+  background: #e8f5ee;
+  padding: 0.22rem 0.5rem;
+  border-radius: 6px;
+  margin-bottom: 0.45rem;
 }
 
-.vendors-panel__title {
-  margin: 0.15rem 0 0;
-  font-size: 1rem;
+.logistics-vendors__title {
+  margin: 0;
+  font-size: 1.28rem;
+  line-height: 1.25;
   color: var(--green-dark);
 }
 
-.vendors-panel__nearby {
-  margin: 0.35rem 0 0;
+.logistics-vendors__sub {
+  margin: 0.5rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: #2f4538;
+}
+
+.logistics-vendors__sub strong {
+  color: var(--green-dark);
+  font-weight: 700;
+}
+
+.logistics-vendors__empty {
+  text-align: center;
+  font-size: 0.85rem;
+  color: #5a6b62;
+  padding: 1rem;
+}
+
+.logistics-vendors__list {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.logistics-vendor-card {
+  background: #fff;
+  border-radius: 0.85rem;
+  padding: 0.75rem;
+  border: 1px solid #d4e8da;
+  box-shadow: 0 4px 14px rgba(26, 61, 46, 0.06);
+}
+
+.logistics-vendor-card--rec {
+  border-color: var(--gold-dark);
+  box-shadow: 0 4px 18px rgba(232, 185, 35, 0.25);
+}
+
+.logistics-vendor-card--muted {
+  opacity: 0.92;
+}
+
+.logistics-vendor-card__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  margin-bottom: 0.55rem;
+}
+
+.logistics-vendor-card__icon {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #e8f5ee;
+  display: grid;
+  place-items: center;
+}
+
+.logistics-vendor-card__icon-svg {
+  width: 20px;
+  height: 20px;
+  color: var(--green-mid);
+}
+
+.logistics-vendor-card__meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
   font-size: 0.72rem;
   color: #5a6b62;
 }
 
-.vendors-panel__nearby strong {
+.logistics-vendor-card__meta strong {
+  font-size: 0.9rem;
   color: var(--green-dark);
 }
 
-.vendors-panel__list {
-  max-height: min(52vh, 420px);
-  overflow-y: auto;
-  padding-right: 0.15rem;
-  -webkit-overflow-scrolling: touch;
+.logistics-vendor-card__badge {
+  flex-shrink: 0;
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 0.2rem 0.45rem;
+  border-radius: 999px;
+  background: var(--gold);
+  color: var(--green-dark);
 }
 
-.storage-card--vendor {
-  width: 100%;
-  text-align: left;
-  border: none;
-  cursor: pointer;
-  font: inherit;
+.logistics-vendor-card__quote {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.5rem;
+  padding: 0.55rem 0.65rem;
+  margin-bottom: 0.5rem;
+  border-radius: 0.55rem;
+  background: #e8f4fc;
+  border: 1px solid #b8d4e8;
+  font-size: 0.75rem;
+  color: #2f4538;
+}
+
+.logistics-vendor-card__quote strong {
+  font-size: 1rem;
+  color: var(--green-dark);
+}
+
+.logistics-vendor-card__units {
+  margin-left: auto;
+  font-weight: 600;
+  color: var(--green-mid);
+}
+
+.logistics-vendor-card__vehicles-label {
+  margin: 0 0 0.35rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #7a8f84;
+}
+
+.logistics-vendor-card__vehicles ul {
+  list-style: none;
+  margin: 0 0 0.5rem;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.logistics-vendor-card__vehicle {
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.45rem 0.55rem;
+  border-radius: 0.5rem;
+  background: #fafcfa;
+  border: 1px solid #e0efe6;
+  font-size: 0.72rem;
+}
+
+.logistics-vendor-card__vehicle--none {
+  color: #9e9e9e;
+  font-style: italic;
+}
+
+.logistics-vendor-card__vehicle-type {
+  font-weight: 700;
+  color: var(--green-dark);
+}
+
+.logistics-vendor-card__vehicle-cap {
+  color: #5a6b62;
+}
+
+.logistics-vendor-card__vehicle-plate {
+  font-size: 0.68rem;
+  color: #7a8f84;
+}
+
+.logistics-vendor-card__services {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-bottom: 0.5rem;
+}
+
+.logistics-vendor-card__call {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--green-dark);
+  background: #e8f5ee;
+  border: 2px solid #b8d4c4;
+  border-radius: 999px;
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.logistics-vendor-card__call:hover {
+  background: #d4edd9;
+  border-color: var(--green-mid);
+}
+
+.logistics-vendor-card__call:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.logistics-vendor-card__warn {
+  margin: 0.45rem 0 0;
+  font-size: 0.68rem;
+  color: #e65100;
 }
 
 .storage-card--detail {

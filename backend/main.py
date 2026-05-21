@@ -15,6 +15,7 @@ from ingest.ingest_ndvi import ingest_ndvi
 from services.finance import evaluate_loan
 from services.price_compare import build_price_comparison
 from services.nlp_parser import needs_confirmation, parse_farmer_message
+from services.logistics_vendors import list_logistics_vendors
 from services.router import recommend_route
 from services.storage_repo import list_storages, update_storage_utilization, count_storages
 from services.yield_service import get_latest_yield, to_legacy_forecast
@@ -216,6 +217,25 @@ def get_storages(
     db: Session = Depends(get_db),
 ):
     return list_storages(db, for_map=for_map)
+
+
+@app.get("/api/logistics/vendors")
+def get_logistics_vendors(
+    quantity_quintals: float = Query(50, ge=1, le=10000),
+    farmer_lat: float | None = Query(None),
+    farmer_lng: float | None = Query(None),
+    destination_lat: float | None = Query(None),
+    destination_lng: float | None = Query(None),
+    destination_name: str | None = Query(None),
+):
+    return list_logistics_vendors(
+        quantity_quintals=quantity_quintals,
+        farmer_lat=farmer_lat,
+        farmer_lng=farmer_lng,
+        destination_lat=destination_lat,
+        destination_lng=destination_lng,
+        destination_name=destination_name,
+    )
 
 
 @app.get("/api/prices")
