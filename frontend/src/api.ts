@@ -333,6 +333,19 @@ export async function fetchYield(): Promise<YieldForecast> {
   return res.json();
 }
 
+export interface AiPredictionResponse {
+  ok: boolean;
+  is_live_gemini: boolean;
+  report: string;
+  api_key_configured: boolean;
+}
+
+export async function fetchAiPrediction(lang = "bn"): Promise<AiPredictionResponse> {
+  const res = await fetch(`/api/yield/ai-prediction?lang=${lang}`);
+  if (!res.ok) throw new Error("AI Prediction fetch failed");
+  return res.json();
+}
+
 export async function fetchStorages(forMap = false): Promise<ColdStorage[]> {
   const res = await fetch(`/api/storages?for_map=${forMap}`);
   if (!res.ok) throw new Error("Storages fetch failed");
