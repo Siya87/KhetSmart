@@ -694,6 +694,53 @@ h3,
   white-space: pre-line;
 }
 
+.farmer-shortcuts {
+  margin: 0.5rem 0 0.65rem;
+  padding: 0.55rem 0.6rem;
+  border-radius: 0.75rem;
+  background: #f7faf8;
+  border: 1px solid #d4e8da;
+}
+
+.farmer-shortcuts__heading {
+  margin: 0 0 0.45rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--green-dark);
+}
+
+.farmer-shortcuts__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--green-dark);
+}
+
+.farmer-shortcuts__field input {
+  padding: 0.45rem 0.55rem;
+  border: 2px solid var(--green-mid);
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+.farmer-shortcuts__field-label {
+  margin: 0 0 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--green-dark);
+}
+
+.farmer-shortcuts__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.45rem;
+}
+
 .parse-confirm {
   margin-top: 0.65rem;
   padding: 0.65rem;
@@ -2625,6 +2672,58 @@ h3,
   color: #5a6b62;
   padding: 0.75rem 1rem;
   margin: 0;
+}
+
+.vendors-panel {
+  margin-top: 0.75rem;
+  padding: 0.65rem 0.5rem 0.25rem;
+  border-radius: 0.85rem;
+  background: #f4faf6;
+  border: 1px solid #d4e8da;
+}
+
+.vendors-panel__head {
+  padding: 0 0.35rem 0.55rem;
+}
+
+.vendors-panel__eyebrow {
+  display: block;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #7a8f84;
+}
+
+.vendors-panel__title {
+  margin: 0.15rem 0 0;
+  font-size: 1rem;
+  color: var(--green-dark);
+}
+
+.vendors-panel__nearby {
+  margin: 0.35rem 0 0;
+  font-size: 0.72rem;
+  color: #5a6b62;
+}
+
+.vendors-panel__nearby strong {
+  color: var(--green-dark);
+}
+
+.vendors-panel__list {
+  max-height: min(52vh, 420px);
+  overflow-y: auto;
+  padding-right: 0.15rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.storage-card--vendor {
+  width: 100%;
+  text-align: left;
+  border: none;
+  cursor: pointer;
+  font: inherit;
 }
 
 .storage-card--detail {

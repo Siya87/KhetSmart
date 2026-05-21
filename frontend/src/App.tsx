@@ -16,8 +16,14 @@ import { FarmerConsultResults } from "./components/FarmerConsultResults";
 import { PredictPanel } from "./components/PredictPanel";
 import { SelectedStorageCard } from "./components/SelectedStorageCard";
 import { StorageMap, type RoutePath } from "./components/StorageMap";
+import { ColdStorageVendorsList } from "./components/ColdStorageVendorsList";
 import { FarmerHeaderLocation } from "./components/FarmerHeaderLocation";
 import { FarmerParseConfirm } from "./components/FarmerParseConfirm";
+import {
+  DEFAULT_HARVEST_SELECTION,
+  FarmerHarvestShortcuts,
+  harvestShortcutText,
+} from "./components/FarmerHarvestShortcuts";
 import { FarmerVoiceInput } from "./components/FarmerVoiceInput";
 import { LocationPermissionModal } from "./components/LocationPermissionModal";
 import { IconMic, IconRupee, IconSatellite, IconWarehouse } from "./components/icons";
@@ -25,9 +31,6 @@ import { useAppSettings } from "./hooks/useAppSettings";
 import { useFarmerLocation } from "./hooks/useFarmerLocation";
 
 type Tab = "farmer" | "predict" | "network" | "finance";
-
-const EMPTY_INPUT_MSG =
-  "কৃপया আপনার ফসলের তথ্য লিখুন বা বলুন।\nPlease type or speak your harvest details.";
 
 const TABS: { id: Tab; label: string; icon: ReactNode }[] = [
   { id: "farmer", label: "Farmer", icon: <IconMic className="tab-icon" /> },
@@ -50,6 +53,9 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [inputError, setInputError] = useState<string | null>(null);
   const [parsePreview, setParsePreview] = useState<FarmerParseResult | null>(null);
+  const [harvestSelection, setHarvestSelection] = useState<ConsultOverrides>(
+    DEFAULT_HARVEST_SELECTION
+  );
   const [confirmOverrides, setConfirmOverrides] = useState<ConsultOverrides | null>(
     null
   );
@@ -64,6 +70,9 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [opsOpen, setOpsOpen] = useState(false);
   const [mapFocusKey, setMapFocusKey] = useState(0);
+  const [showAllVendors, setShowAllVendors] = useState(false);
+  const [allVendors, setAllVendors] = useState<ColdStorage[]>([]);
+  const [vendorsLoading, setVendorsLoading] = useState(false);
 
   const loadPredict = useCallback(async () => {
     try {
@@ -91,6 +100,12 @@ export default function App() {
     if (inputError) setInputError(null);
   }
 
+  function handleHarvestChange(next: ConsultOverrides) {
+    setHarvestSelection(next);
+    setConfirmOverrides((prev) => (prev ? { ...prev, ...next } : null));
+    if (inputError) setInputError(null);
+  }
+
   useEffect(() => {
     if (result?.route.storage_id) {
       setSelectedStorageId(result.route.storage_id);
@@ -114,20 +129,26 @@ export default function App() {
         }
       : null;
 
+  const vendorSource = showAllVendors && allVendors.length > 0 ? allVendors : storages;
   const selectedStorage =
-    storages.find((s) => s.id === selectedStorageId) ??
-    storages.find((s) => s.name === result?.route.storage_name) ??
+    vendorSource.find((s) => s.id === selectedStorageId) ??
+    vendorSource.find((s) => s.name === result?.route.storage_name) ??
     null;
 
   const locationPayload = farmerLocation.coords
     ? { lat: farmerLocation.coords.lat, lng: farmerLocation.coords.lng }
     : null;
 
-  async function runConsult(overrides?: ConsultOverrides | null) {
+  async function runConsult(
+    overrides?: ConsultOverrides | null,
+    message?: string
+  ) {
     setLoading(true);
     setError(null);
+    const consultText =
+      (message ?? text.trim()) || harvestShortcutText(harvestSelection);
     try {
-      const data = await consultFarmer(text.trim(), locationPayload, overrides);
+      const data = await consultFarmer(consultText, locationPayload, overrides);
       setResult(data);
       setParsePreview(null);
       setConfirmOverrides(null);
@@ -140,36 +161,38 @@ export default function App() {
   }
 
   async function handleGetRoute() {
-    const trimmed = text.trim();
-    if (!trimmed) {
-      setInputError(EMPTY_INPUT_MSG);
-      return;
-    }
-    setInputError(null);
-
     if (awaitingConfirm && confirmOverrides) {
       await runConsult(confirmOverrides);
       return;
     }
 
+    const trimmed = text.trim();
+    const consultText = trimmed || harvestShortcutText(harvestSelection);
+    setInputError(null);
+
     setLoading(true);
     setError(null);
     try {
-      const preview = await parseFarmerText(trimmed);
-      if (preview.needs_confirmation) {
-        setParsePreview(preview);
-        setConfirmOverrides({
+      let overrides: ConsultOverrides = { ...harvestSelection };
+
+      if (trimmed) {
+        const preview = await parseFarmerText(trimmed);
+        overrides = {
           quantity_quintals: preview.quantity_quintals,
           crop: preview.crop,
           district: preview.district,
-        });
-        setAwaitingConfirm(true);
-      } else {
-        const data = await consultFarmer(trimmed, locationPayload, null);
-        setResult(data);
-        setParsePreview(null);
-        setConfirmOverrides(null);
+        };
+        setHarvestSelection(overrides);
+
+        if (preview.needs_confirmation) {
+          setParsePreview(preview);
+          setConfirmOverrides(overrides);
+          setAwaitingConfirm(true);
+          return;
+        }
       }
+
+      await runConsult(overrides, consultText);
     } catch {
       setError("Could not reach KhetSmart API. Run: uvicorn main:app --reload");
     } finally {
@@ -183,14 +206,24 @@ export default function App() {
     setAwaitingConfirm(false);
   }
 
-  function handleShowOnMap() {
+  async function handleShowAllVendors() {
     if (!result?.route) return;
-    if (result.route.storage_id) {
-      setSelectedStorageId(result.route.storage_id);
+    setVendorsLoading(true);
+    setError(null);
+    try {
+      const vendors = await fetchStorages(false);
+      setAllVendors(vendors);
+      setShowAllVendors(true);
+      if (result.route.storage_id) {
+        setSelectedStorageId(result.route.storage_id);
+      }
+      setTab("network");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch {
+      setError("Could not load cold storage vendors. Start API on port 8000.");
+    } finally {
+      setVendorsLoading(false);
     }
-    setMapFocusKey((k) => k + 1);
-    setTab("network");
-    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   return (
@@ -258,11 +291,26 @@ export default function App() {
                   disabled={loading}
                   inputError={inputError}
                 />
+                <FarmerHarvestShortcuts
+                  selection={
+                    awaitingConfirm && confirmOverrides
+                      ? confirmOverrides
+                      : harvestSelection
+                  }
+                  onChange={
+                    awaitingConfirm && confirmOverrides
+                      ? (next) => {
+                          setConfirmOverrides(next);
+                          setHarvestSelection(next);
+                        }
+                      : handleHarvestChange
+                  }
+                  disabled={loading}
+                />
                 {awaitingConfirm && parsePreview && confirmOverrides && (
                   <FarmerParseConfirm
                     preview={parsePreview}
                     overrides={confirmOverrides}
-                    onOverridesChange={setConfirmOverrides}
                     onConfirm={() => runConsult(confirmOverrides)}
                     onCancel={handleCancelConfirm}
                     loading={loading}
@@ -273,7 +321,7 @@ export default function App() {
                     type="button"
                     className="btn-primary"
                     onClick={handleGetRoute}
-                    disabled={loading || !text.trim()}
+                    disabled={loading}
                   >
                     {loading ? (
                       <span className="btn-loading">
@@ -301,7 +349,7 @@ export default function App() {
                 result={result}
                 formatInr={formatInr}
                 onViewFinance={() => setTab("finance")}
-                onShowOnMap={handleShowOnMap}
+                onShowAllVendors={handleShowAllVendors}
               />
             )}
           </div>
@@ -326,26 +374,45 @@ export default function App() {
         {tab === "network" && (
           <div className="network-view animate-in">
             <section className="visual-card">
-              <h3>{totalStorages} cold storages · live network</h3>
+              <h3>
+                {showAllVendors
+                  ? `${allVendors.length} cold storage vendors`
+                  : `${totalStorages} cold storages · live network`}
+              </h3>
               <StorageMap
-                storages={storages}
-                totalCount={totalStorages}
+                storages={showAllVendors ? allVendors : storages}
+                totalCount={showAllVendors ? allVendors.length : totalStorages}
                 highlight={result?.route.storage_name}
-                routePath={routePath}
+                routePath={showAllVendors ? null : routePath}
                 selectedId={selectedStorageId}
-                focusRouteKey={mapFocusKey}
+                focusRouteKey={showAllVendors ? 0 : mapFocusKey}
                 onSelect={(s) => setSelectedStorageId(s.id)}
               />
             </section>
 
-            {selectedStorage ? (
-              <SelectedStorageCard
-                storage={selectedStorage}
-                isRouteTarget={result?.route.storage_name === selectedStorage.name}
-              />
-            ) : (
-              <p className="network-hint">Tap a pin on the map to see facility details.</p>
+            {vendorsLoading && (
+              <p className="network-hint">Loading all vendors…</p>
             )}
+
+            {showAllVendors && allVendors.length > 0 && !vendorsLoading && (
+              <ColdStorageVendorsList
+                storages={allVendors}
+                recommendedName={result?.route.storage_name}
+                recommendedId={result?.route.storage_id}
+                selectedId={selectedStorageId}
+                onSelect={(s) => setSelectedStorageId(s.id)}
+              />
+            )}
+
+            {!showAllVendors &&
+              (selectedStorage ? (
+                <SelectedStorageCard
+                  storage={selectedStorage}
+                  isRouteTarget={result?.route.storage_name === selectedStorage.name}
+                />
+              ) : (
+                <p className="network-hint">Tap a pin on the map to see facility details.</p>
+              ))}
           </div>
         )}
 
@@ -363,7 +430,10 @@ export default function App() {
             key={t.id}
             type="button"
             className={`tab-btn ${tab === t.id ? "active" : ""}`}
-            onClick={() => setTab(t.id)}
+            onClick={() => {
+              if (t.id !== "network") setShowAllVendors(false);
+              setTab(t.id);
+            }}
           >
             {t.icon}
             {t.label}

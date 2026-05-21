@@ -8,7 +8,7 @@ type Props = {
   result: ConsultResponse;
   formatInr: (n: number) => string;
   onViewFinance?: () => void;
-  onShowOnMap?: () => void;
+  onShowAllVendors?: () => void;
 };
 
 function truncateStorage(name: string, max = 28) {
@@ -16,7 +16,12 @@ function truncateStorage(name: string, max = 28) {
   return `${name.slice(0, max)}…`;
 }
 
-function FarmerConsultResults({ result, formatInr, onViewFinance, onShowOnMap }: Props) {
+function FarmerConsultResults({
+  result,
+  formatInr,
+  onViewFinance,
+  onShowAllVendors,
+}: Props) {
   const insight = result.yield_signal.insight;
   const shortInsight =
     insight.length > 160 ? `${insight.slice(0, 157)}…` : insight;
@@ -73,16 +78,16 @@ function FarmerConsultResults({ result, formatInr, onViewFinance, onShowOnMap }:
             <span className="pro-card__eyebrow">Logistics</span>
             <h3>Optimal cold-storage route</h3>
           </div>
-          {onShowOnMap && (
+          {onShowAllVendors && (
             <button
               type="button"
               className="route-show-map route-show-map--head"
-              onClick={onShowOnMap}
+              onClick={onShowAllVendors}
             >
               <span className="route-show-map__icon" aria-hidden>
-                🗺
+                🏭
               </span>
-              Show on map
+              Show all vendors
             </button>
           )}
         </div>
