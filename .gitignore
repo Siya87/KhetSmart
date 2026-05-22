@@ -12,5 +12,4 @@ frontend/tsconfig.tsbuildinfo
 
 # Android compilation ignores
 android-build-tools/
-khetsmart.apk
 
