@@ -54,6 +54,10 @@ FARMER_AUTH_SECRET = os.getenv(
     "FARMER_AUTH_SECRET", "khetsmart-dev-change-in-production"
 )
 
+# Razorpay — UPI & card checkout (https://dashboard.razorpay.com/)
+RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID", "")
+RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET", "")
+
 # OTP (SMS). Set OTP_DEV_EXPOSE=false in production.
 OTP_LENGTH = int(os.getenv("OTP_LENGTH", "6"))
 OTP_TTL_MINUTES = int(os.getenv("OTP_TTL_MINUTES", "10"))

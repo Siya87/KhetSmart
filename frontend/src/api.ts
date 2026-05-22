@@ -719,3 +719,60 @@ export async function importRegistry(): Promise<Record<string, unknown>> {
   if (!res.ok) throw new Error("Registry import failed");
   return res.json();
 }
+
+export interface PaymentConfigResponse {
+  razorpay_enabled: boolean;
+  key_id: string | null;
+}
+
+export async function fetchPaymentConfig(): Promise<PaymentConfigResponse> {
+  const res = await fetch("/api/payments/config");
+  if (!res.ok) return { razorpay_enabled: false, key_id: null };
+  return res.json();
+}
+
+export interface PaymentOrderResponse {
+  order_id: string;
+  amount: number;
+  amount_inr: number;
+  currency: string;
+  receipt: string;
+  key_id: string;
+}
+
+export async function createPaymentOrder(
+  amount_inr: number,
+  receipt_ref?: string
+): Promise<PaymentOrderResponse> {
+  const res = await fetch("/api/payments/create-order", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ amount_inr, receipt_ref }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(
+      (err as { detail?: string }).detail || "payment_order_failed"
+    );
+  }
+  return res.json();
+}
+
+export async function verifyRazorpayPayment(payload: {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+}): Promise<{ verified: boolean; payment_id: string; order_id: string }> {
+  const res = await fetch("/api/payments/verify", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(
+      (err as { detail?: string }).detail || "payment_verify_failed"
+    );
+  }
+  return res.json();
+}

@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import logging
+import os
 import time
 from datetime import datetime, timezone
+from pathlib import Path
 
-from config import OPENWEATHER_API_KEY
+from dotenv import load_dotenv
+
 from services.external_api import fetch_json
 from services.weather_signal import CORRIDOR_LAT, CORRIDOR_LON
 
@@ -17,12 +20,18 @@ OW_FORECAST = "https://api.openweathermap.org/data/2.5/forecast"
 
 _cache: tuple[dict, float] | None = None
 _CACHE_TTL_SEC = 900  # 15 min — within free-tier refresh norms
+_ENV_FILE = Path(__file__).resolve().parent.parent / ".env"
+
+
+def _openweather_key() -> str:
+    load_dotenv(_ENV_FILE, override=True)
+    return os.getenv("OPENWEATHER_API_KEY", "").strip()
 
 
 def fetch_openweather_live() -> dict | None:
     """Current conditions + next 5 days (3h steps) for potato corridor."""
     global _cache
-    key = (OPENWEATHER_API_KEY or "").strip()
+    key = _openweather_key()
     if not key:
         return None
 

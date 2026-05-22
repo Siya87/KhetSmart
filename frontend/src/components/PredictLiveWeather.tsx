@@ -68,14 +68,20 @@ export function PredictLiveWeather({ weather, language }: Props) {
   const isLive = Boolean(weather.is_live_openweather);
   const forecast = (weather.forecast_days as ForecastDay[] | undefined) ?? [];
 
+  const stresses = weather.stresses ?? [];
+  const nowStress = stresses.find((s) => s.startsWith("Now:"));
+  const corridorStresses = stresses.filter((s) => !s.startsWith("Now:"));
+
   return (
-    <section className="predict-live-weather">
+    <section
+      className={`predict-live-weather ${isLive ? "predict-live-weather--live" : ""}`}
+    >
       <div className="predict-live-weather__head">
         <h3 className="predict-live-weather__title">{t.title}</h3>
         <span
           className={`predict-live-weather__badge ${isLive ? "predict-live-weather__badge--on" : ""}`}
         >
-          {isLive ? `● ${t.live}` : weather.source ?? "—"}
+          {isLive ? `● ${t.live}` : (weather.source ?? "Open-Meteo")}
         </span>
       </div>
 
@@ -157,13 +163,20 @@ export function PredictLiveWeather({ weather, language }: Props) {
         </div>
       )}
 
-      {(weather.stresses?.length ?? 0) > 0 && (
-        <ul className="predict-live-weather__stresses">
-          <li className="predict-live-weather__stresses-title">{t.stress}</li>
-          {weather.stresses!.slice(0, 3).map((s) => (
-            <li key={s}>{s}</li>
-          ))}
-        </ul>
+      {(nowStress || corridorStresses.length > 0) && (
+        <div className="predict-live-weather__stresses">
+          <p className="predict-live-weather__stresses-title">{t.stress}</p>
+          {nowStress && (
+            <p className="predict-live-weather__stress-now">{nowStress.replace(/^Now:\s*/, "")}</p>
+          )}
+          {corridorStresses.length > 0 && (
+            <ul className="predict-live-weather__stress-list">
+              {corridorStresses.slice(0, 2).map((s) => (
+                <li key={s}>{s}</li>
+              ))}
+            </ul>
+          )}
+        </div>
       )}
 
       {!isLive && (

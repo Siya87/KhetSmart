@@ -783,6 +783,70 @@ def farmer_consult(body: ConsultRequest, db: Session = Depends(get_db)):
     }
 
 
+# --- Razorpay payments ---
+
+
+class PaymentCreateOrderRequest(BaseModel):
+    amount_inr: int = Field(..., ge=1, le=10_000_000)
+    receipt_ref: str | None = Field(None, max_length=40)
+
+
+class PaymentVerifyRequest(BaseModel):
+    razorpay_order_id: str = Field(..., min_length=4)
+    razorpay_payment_id: str = Field(..., min_length=4)
+    razorpay_signature: str = Field(..., min_length=4)
+
+
+@app.get("/api/payments/config")
+def payments_config():
+    from services.razorpay_payments import public_config
+
+    return public_config()
+
+
+@app.post("/api/payments/create-order")
+def payments_create_order(body: PaymentCreateOrderRequest):
+    from services.razorpay_payments import create_order, razorpay_configured
+
+    if not razorpay_configured():
+        raise HTTPException(
+            status_code=503,
+            detail="razorpay_not_configured",
+        )
+    try:
+        return create_order(body.amount_inr, body.receipt_ref)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except RuntimeError as e:
+        msg = str(e)
+        if msg == "razorpay_not_configured":
+            raise HTTPException(status_code=503, detail=msg) from e
+        raise HTTPException(status_code=502, detail="razorpay_order_failed") from e
+
+
+@app.post("/api/payments/verify")
+def payments_verify(body: PaymentVerifyRequest):
+    from services.razorpay_payments import (
+        razorpay_configured,
+        verify_payment_signature,
+    )
+
+    if not razorpay_configured():
+        raise HTTPException(status_code=503, detail="razorpay_not_configured")
+    ok = verify_payment_signature(
+        body.razorpay_order_id,
+        body.razorpay_payment_id,
+        body.razorpay_signature,
+    )
+    if not ok:
+        raise HTTPException(status_code=400, detail="invalid_signature")
+    return {
+        "verified": True,
+        "payment_id": body.razorpay_payment_id,
+        "order_id": body.razorpay_order_id,
+    }
+
+
 # --- Admin / ops (set ADMIN_API_KEY in .env) ---
 
 

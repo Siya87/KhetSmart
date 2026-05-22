@@ -22,14 +22,6 @@ function PinIcon() {
   );
 }
 
-function ChevronDown() {
-  return (
-    <svg className="header-loc-zomato__chevron" viewBox="0 0 24 24" width="18" height="18" aria-hidden>
-      <path fill="currentColor" d="M7 10l5 5 5-5H7z" />
-    </svg>
-  );
-}
-
 export function FarmerHeaderLocation({
   status,
   coords,
@@ -70,7 +62,6 @@ export function FarmerHeaderLocation({
             <span className="header-loc-zomato__title">
               {place.loading ? t.yourFarm : place.title}
             </span>
-            <ChevronDown />
           </span>
           <span className="header-loc-zomato__sub">
             {place.loading ? "…" : place.subtitle}
@@ -86,7 +77,6 @@ export function FarmerHeaderLocation({
       <span className="header-loc-zomato__text">
         <span className="header-loc-zomato__row">
           <span className="header-loc-zomato__title">{t.setLocation}</span>
-          <ChevronDown />
         </span>
         <span className="header-loc-zomato__sub">{error ?? t.gpsOffHint}</span>
       </span>

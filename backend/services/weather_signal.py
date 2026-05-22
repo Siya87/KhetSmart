@@ -63,12 +63,16 @@ def _merge_openweather(base: dict, live: dict) -> dict:
 def fetch_corridor_weather(past_days: int = 90) -> dict:
     """Daily weather summary + stress flags; OpenWeather live when API key set."""
     global _cache
-    if _cache and _cache[1] > time.time():
-        return _cache[0]
-
     from services.openweather_signal import fetch_openweather_live
 
     ow = fetch_openweather_live()
+
+    if _cache and _cache[1] > time.time():
+        cached = _cache[0]
+        # Refresh if OpenWeather is now available but cache predates it
+        if not (ow and not cached.get("is_live_openweather")):
+            return cached
+        _cache = None
 
     end = datetime.now(timezone.utc).date()
     start = end - timedelta(days=past_days)

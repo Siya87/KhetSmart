@@ -1,8 +1,19 @@
-import { useState } from "react";
-import type { ConsultOverrides, ConsultResponse } from "../api";
+import { useCallback, useEffect, useState } from "react";
+import {
+  createPaymentOrder,
+  fetchPaymentConfig,
+  verifyRazorpayPayment,
+  type ConsultOverrides,
+  type ConsultResponse,
+} from "../api";
 import type { AppLanguage } from "../hooks/useAppSettings";
+import { openRazorpayCheckout } from "../razorpay";
 import { glutLabelBnEn, tFarmer } from "../i18n/farmerSimple";
 import { DistressPriceCard } from "./DistressPriceCard";
+import {
+  PaymentCheckoutModal,
+  type PaymentMethod,
+} from "./PaymentCheckoutModal";
 import { RouteFlow } from "./RouteFlow";
 import { IconTruck } from "./icons";
 
@@ -39,8 +50,23 @@ export function FarmerConsultResults({
   const [checkoutSuccess, setCheckoutSuccess] = useState(false);
   const [receiptId, setReceiptId] = useState(100000);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [selectedPayment, setSelectedPayment] = useState<"razorpay" | "upi" | "cod" | "cash">("razorpay");
+  const [razorpayEnabled, setRazorpayEnabled] = useState(false);
+  const [razorpayKeyId, setRazorpayKeyId] = useState<string | null>(null);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [confirmedPayment, setConfirmedPayment] = useState<string>("");
+
+  useEffect(() => {
+    if (!showPaymentModal) return;
+    fetchPaymentConfig()
+      .then((d) => {
+        setRazorpayEnabled(Boolean(d.razorpay_enabled));
+        setRazorpayKeyId(d.key_id);
+      })
+      .catch(() => {
+        setRazorpayEnabled(false);
+        setRazorpayKeyId(null);
+      });
+  }, [showPaymentModal]);
 
   const quantity = selection?.quantity_quintals ?? result.parsed.quantity_quintals;
   const cropLabel = selection?.crop ?? result.parsed.crop;
@@ -64,20 +90,11 @@ export function FarmerConsultResults({
     setShowPaymentModal(true);
   };
 
-  const handleCheckout = (paymentMethod: "razorpay" | "upi" | "cod" | "cash") => {
-    setCheckoutLoading(true);
-    setShowPaymentModal(false);
-    const newReceiptId = Math.floor(100000 + Math.random() * 900000);
-    setReceiptId(newReceiptId);
+  const finishBooking = useCallback(
+    (paymentLabel: string, newReceiptId: number, delayMs = 1200) => {
+      setConfirmedPayment(paymentLabel);
 
-    let paymentLabel = "Razorpay (Online - Cards/Netbanking)";
-    if (paymentMethod === "upi") paymentLabel = "Instant UPI (GPay/PhonePe/Paytm)";
-    if (paymentMethod === "cod") paymentLabel = "Cash on Delivery (COD - Pay at Storage)";
-    if (paymentMethod === "cash") paymentLabel = "Cash Payment (Direct at Farm)";
-
-    setConfirmedPayment(paymentLabel);
-
-    const receiptContent = `
+      const receiptContent = `
 ========================================
        KHETSMART BOOKING RECEIPT
 ========================================
@@ -111,292 +128,158 @@ TOTAL AMOUNT PAID:         ${formatInr(totalAmount)}
 ========================================
     `;
 
-    setTimeout(() => {
-      // Trigger download
-      const blob = new Blob([receiptContent], { type: "text/plain;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `khetsmart_receipt_GRN-${newReceiptId}.txt`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      setTimeout(() => {
+        const blob = new Blob([receiptContent], { type: "text/plain;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `khetsmart_receipt_GRN-${newReceiptId}.txt`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
 
-      // Save order to localStorage
-      const newOrder = {
-        id: `GRN-${newReceiptId}`,
-        date: new Date().toLocaleDateString(),
-        time: new Date().toLocaleTimeString(),
-        crop: result.parsed.crop,
-        quantity: quantity,
-        storageFee: storageFee,
-        logisticsCost: logisticsCost,
-        totalAmount: totalAmount,
-        storageName: result.route.storage_name,
-        storageDistrict: result.route.district,
-        storageLat: result.route.storage_lat,
-        storageLng: result.route.storage_lng,
-        farmDistrict: result.parsed.district || result.route.district || "Purba Bardhaman",
-        farmLat: result.route.origin_lat,
-        farmLng: result.route.origin_lng,
-        vendorName: selectedVendor?.name,
-        status: "Stored in Cold Storage" as const,
-        receiptContent: receiptContent,
-        paymentMethod: paymentLabel,
-      };
+        const newOrder = {
+          id: `GRN-${newReceiptId}`,
+          date: new Date().toLocaleDateString(),
+          time: new Date().toLocaleTimeString(),
+          crop: result.parsed.crop,
+          quantity: quantity,
+          storageFee: storageFee,
+          logisticsCost: logisticsCost,
+          totalAmount: totalAmount,
+          storageName: result.route.storage_name,
+          storageDistrict: result.route.district,
+          storageLat: result.route.storage_lat,
+          storageLng: result.route.storage_lng,
+          farmDistrict: result.parsed.district || result.route.district || "Purba Bardhaman",
+          farmLat: result.route.origin_lat,
+          farmLng: result.route.origin_lng,
+          vendorName: selectedVendor?.name,
+          status: "Stored in Cold Storage" as const,
+          receiptContent: receiptContent,
+          paymentMethod: paymentLabel,
+        };
 
-      const existingOrdersStr = localStorage.getItem("khetsmart_orders") || "[]";
-      const existingOrders = JSON.parse(existingOrdersStr);
-      existingOrders.unshift(newOrder);
-      localStorage.setItem("khetsmart_orders", JSON.stringify(existingOrders));
+        const existingOrdersStr = localStorage.getItem("khetsmart_orders") || "[]";
+        const existingOrders = JSON.parse(existingOrdersStr);
+        existingOrders.unshift(newOrder);
+        localStorage.setItem("khetsmart_orders", JSON.stringify(existingOrders));
 
+        setCheckoutLoading(false);
+        setCheckoutSuccess(true);
+        setCheckoutError(null);
+      }, delayMs);
+    },
+    [
+      formatInr,
+      logisticsCost,
+      quantity,
+      result.parsed.crop,
+      result.parsed.district,
+      result.route.district,
+      result.route.origin_lat,
+      result.route.origin_lng,
+      result.route.storage_lat,
+      result.route.storage_lng,
+      result.route.storage_name,
+      selectedVendor?.name,
+      storageFee,
+      totalAmount,
+    ]
+  );
+
+  const handleCheckout = async (paymentMethod: PaymentMethod) => {
+    setCheckoutError(null);
+    const newReceiptId = Math.floor(100000 + Math.random() * 900000);
+    setReceiptId(newReceiptId);
+    setShowPaymentModal(false);
+
+    if (paymentMethod === "cod") {
+      setCheckoutLoading(true);
+      finishBooking("Cash on delivery (COD)", newReceiptId, 1800);
+      return;
+    }
+
+    if (!razorpayEnabled || !razorpayKeyId) {
+      setCheckoutError(
+        language === "bn"
+          ? "UPI/কার্ডের জন্য backend/.env এ Razorpay keys যোগ করুন"
+          : "Add Razorpay keys in backend/.env to pay with UPI or card"
+      );
+      setShowPaymentModal(true);
+      return;
+    }
+
+    setCheckoutLoading(true);
+    try {
+      const order = await createPaymentOrder(
+        Math.round(totalAmount),
+        `GRN-${newReceiptId}`
+      );
+      await openRazorpayCheckout({
+        keyId: order.key_id || razorpayKeyId,
+        orderId: order.order_id,
+        amountPaise: order.amount,
+        method: paymentMethod,
+        description: "KhetSmart cold storage & logistics booking",
+        onSuccess: async (resp) => {
+          try {
+            await verifyRazorpayPayment(resp);
+            const base =
+              paymentMethod === "upi"
+                ? "UPI (PhonePe / GPay / Paytm)"
+                : "Card (debit / credit)";
+            finishBooking(
+              `${base} · Paid · ${resp.razorpay_payment_id}`,
+              newReceiptId,
+              400
+            );
+          } catch {
+            setCheckoutLoading(false);
+            setCheckoutError(
+              language === "bn"
+                ? "পেমেন্ট যাচাই ব্যর্থ। সাপোর্টে যোগাযোগ করুন।"
+                : "Payment verification failed. Contact support with your receipt."
+            );
+          }
+        },
+        onDismiss: () => {
+          setCheckoutLoading(false);
+        },
+        onFail: (msg) => {
+          setCheckoutLoading(false);
+          setCheckoutError(msg);
+        },
+      });
+    } catch (e) {
       setCheckoutLoading(false);
-      setCheckoutSuccess(true);
-    }, 1800);
+      const detail = e instanceof Error ? e.message : "payment_failed";
+      setCheckoutError(
+        detail === "razorpay_not_configured"
+          ? language === "bn"
+            ? "Razorpay কনফিগার করা নেই"
+            : "Razorpay is not configured on the server"
+          : language === "bn"
+            ? "পেমেন্ট শুরু করা যায়নি। আবার চেষ্টা করুন।"
+            : "Could not start payment. Please try again."
+      );
+      setShowPaymentModal(true);
+    }
   };
 
   return (
     <div className="farmer-results farmer-results--simple animate-in">
-      {showPaymentModal && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(15, 23, 42, 0.8)",
-            zIndex: 1100,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "20px",
-            animation: "fadeIn 0.2s ease-out",
-            color: "#0f172a"
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: "#fff",
-              borderRadius: "16px",
-              maxWidth: "400px",
-              width: "100%",
-              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-              overflow: "hidden"
-            }}
-          >
-            {/* Razorpay Header */}
-            <div
-              style={{
-                background: "linear-gradient(135deg, #3393df 0%, #1c66d5 100%)",
-                color: "#fff",
-                padding: "20px",
-                textAlign: "left",
-                position: "relative"
-              }}
-            >
-              <button
-                type="button"
-                onClick={() => setShowPaymentModal(false)}
-                style={{
-                  position: "absolute",
-                  top: "16px",
-                  right: "16px",
-                  background: "transparent",
-                  border: "none",
-                  color: "#fff",
-                  fontSize: "1.4rem",
-                  cursor: "pointer"
-                }}
-              >
-                ×
-              </button>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                <span style={{ fontSize: "1.6rem" }}>💳</span>
-                <div>
-                  <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: "bold" }}>KhetSmart Checkout</h4>
-                  <small style={{ opacity: 0.85, fontSize: "0.72rem" }}>Secure gateway by Razorpay</small>
-                </div>
-              </div>
-              <div style={{ borderTop: "1px solid rgba(255,255,255,0.15)", paddingTop: "8px", display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                <span style={{ fontSize: "0.72rem", textTransform: "uppercase", letterSpacing: "1px" }}>Amount to Pay</span>
-                <strong style={{ fontSize: "1.3rem" }}>{formatInr(totalAmount)}</strong>
-              </div>
-            </div>
-
-            {/* Payment Options Selection Body */}
-            <div style={{ padding: "20px" }}>
-              <p style={{ fontSize: "0.8rem", color: "#64748b", margin: "0 0 16px 0", fontWeight: "bold", textAlign: "left", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                Select Payment Method
-              </p>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                {/* Razorpay Card option */}
-                <label
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    padding: "12px",
-                    borderRadius: "10px",
-                    border: `2px solid ${selectedPayment === "razorpay" ? "#1c66d5" : "#e2e8f0"}`,
-                    backgroundColor: selectedPayment === "razorpay" ? "#f8fafc" : "#fff",
-                    cursor: "pointer",
-                    transition: "all 0.2s"
-                  }}
-                >
-                  <input
-                    type="radio"
-                    name="payment_choice"
-                    value="razorpay"
-                    checked={selectedPayment === "razorpay"}
-                    onChange={() => setSelectedPayment("razorpay")}
-                    style={{ marginRight: "12px", width: "16px", height: "16px" }}
-                  />
-                  <div style={{ textAlign: "left" }}>
-                    <strong style={{ display: "block", fontSize: "0.85rem", color: "#1e293b" }}>💳 Razorpay Secure Online</strong>
-                    <span style={{ fontSize: "0.7rem", color: "#64748b" }}>Pay via Cards, Netbanking, or Wallet</span>
-                  </div>
-                </label>
-
-                {/* UPI option */}
-                <label
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    padding: "12px",
-                    borderRadius: "10px",
-                    border: `2px solid ${selectedPayment === "upi" ? "#1c66d5" : "#e2e8f0"}`,
-                    backgroundColor: selectedPayment === "upi" ? "#f8fafc" : "#fff",
-                    cursor: "pointer",
-                    transition: "all 0.2s"
-                  }}
-                >
-                  <input
-                    type="radio"
-                    name="payment_choice"
-                    value="upi"
-                    checked={selectedPayment === "upi"}
-                    onChange={() => setSelectedPayment("upi")}
-                    style={{ marginRight: "12px", width: "16px", height: "16px" }}
-                  />
-                  <div style={{ textAlign: "left" }}>
-                    <strong style={{ display: "block", fontSize: "0.85rem", color: "#1e293b" }}>📱 Instant UPI</strong>
-                    <span style={{ fontSize: "0.7rem", color: "#64748b" }}>Pay instantly via Google Pay, PhonePe, or Paytm</span>
-                  </div>
-                </label>
-
-                {/* COD option */}
-                <label
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    padding: "12px",
-                    borderRadius: "10px",
-                    border: `2px solid ${selectedPayment === "cod" ? "#1c66d5" : "#e2e8f0"}`,
-                    backgroundColor: selectedPayment === "cod" ? "#f8fafc" : "#fff",
-                    cursor: "pointer",
-                    transition: "all 0.2s"
-                  }}
-                >
-                  <input
-                    type="radio"
-                    name="payment_choice"
-                    value="cod"
-                    checked={selectedPayment === "cod"}
-                    onChange={() => setSelectedPayment("cod")}
-                    style={{ marginRight: "12px", width: "16px", height: "16px" }}
-                  />
-                  <div style={{ textAlign: "left" }}>
-                    <strong style={{ display: "block", fontSize: "0.85rem", color: "#1e293b" }}>🚚 Cash on Delivery (COD)</strong>
-                    <span style={{ fontSize: "0.7rem", color: "#64748b" }}>Pay at cold storage during potato drop-off</span>
-                  </div>
-                </label>
-
-                {/* Cash option */}
-                <label
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    padding: "12px",
-                    borderRadius: "10px",
-                    border: `2px solid ${selectedPayment === "cash" ? "#1c66d5" : "#e2e8f0"}`,
-                    backgroundColor: selectedPayment === "cash" ? "#f8fafc" : "#fff",
-                    cursor: "pointer",
-                    transition: "all 0.2s"
-                  }}
-                >
-                  <input
-                    type="radio"
-                    name="payment_choice"
-                    value="cash"
-                    checked={selectedPayment === "cash"}
-                    onChange={() => setSelectedPayment("cash")}
-                    style={{ marginRight: "12px", width: "16px", height: "16px" }}
-                  />
-                  <div style={{ textAlign: "left" }}>
-                    <strong style={{ display: "block", fontSize: "0.85rem", color: "#1e293b" }}>💵 Cash (Direct at Farm)</strong>
-                    <span style={{ fontSize: "0.7rem", color: "#64748b" }}>Hand cash payment to pickup truck driver</span>
-                  </div>
-                </label>
-              </div>
-
-              {/* Action Buttons */}
-              <div style={{ display: "flex", gap: "10px", marginTop: "24px" }}>
-                <button
-                  type="button"
-                  onClick={() => setShowPaymentModal(false)}
-                  style={{
-                    flex: 1,
-                    padding: "10px",
-                    borderRadius: "8px",
-                    border: "1px solid #cbd5e1",
-                    backgroundColor: "#fff",
-                    color: "#475569",
-                    fontWeight: "bold",
-                    fontSize: "0.85rem",
-                    cursor: "pointer"
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleCheckout(selectedPayment)}
-                  style={{
-                    flex: 2,
-                    padding: "10px",
-                    borderRadius: "8px",
-                    border: "none",
-                    backgroundColor: "#1c66d5",
-                    color: "#fff",
-                    fontWeight: "bold",
-                    fontSize: "0.85rem",
-                    cursor: "pointer",
-                    boxShadow: "0 4px 10px rgba(28, 102, 213, 0.3)"
-                  }}
-                >
-                  Confirm & Pay
-                </button>
-              </div>
-            </div>
-
-            {/* Razorpay Footer */}
-            <div
-              style={{
-                backgroundColor: "#f8fafc",
-                padding: "12px",
-                fontSize: "0.68rem",
-                color: "#64748b",
-                textAlign: "center",
-                borderTop: "1px solid #e2e8f0"
-              }}
-            >
-              🔒 PCI-DSS Compliant Secure Gateway
-            </div>
-          </div>
-        </div>
-      )}
+      <PaymentCheckoutModal
+        open={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        totalAmount={totalAmount}
+        formatInr={formatInr}
+        language={language}
+        razorpayEnabled={razorpayEnabled}
+        busy={checkoutLoading}
+        onConfirm={handleCheckout}
+      />
 
       {checkoutSuccess && (
         <div
@@ -701,6 +584,24 @@ TOTAL AMOUNT PAID:         ${formatInr(totalAmount)}
             </button>
           </div>
         </section>
+      )}
+
+      {checkoutError && (
+        <p
+          role="alert"
+          style={{
+            marginTop: "12px",
+            padding: "10px 12px",
+            borderRadius: "10px",
+            background: "#fef2f2",
+            border: "1px solid #fecaca",
+            color: "#991b1b",
+            fontSize: "0.85rem",
+            fontWeight: 600,
+          }}
+        >
+          {checkoutError}
+        </p>
       )}
 
       {/* FINAL CHECKOUT & BOOKING CARD */}
