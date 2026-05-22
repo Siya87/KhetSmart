@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import {
   consultFarmer,
   fetchHealth,
@@ -107,6 +107,8 @@ export default function App() {
   );
   const [vendorsLoading, setVendorsLoading] = useState(false);
   const [selectedVendor, setSelectedVendor] = useState<LogisticsVendor | null>(null);
+  const [planRefreshing, setPlanRefreshing] = useState(false);
+  const planRecalcSkipRef = useRef(true);
 
   const loadPredict = useCallback(async () => {
     try {
@@ -125,6 +127,50 @@ export default function App() {
   useEffect(() => {
     loadPredict();
   }, [loadPredict]);
+
+  const locationPayload = farmerLocation.coords
+    ? { lat: farmerLocation.coords.lat, lng: farmerLocation.coords.lng }
+    : null;
+
+  useEffect(() => {
+    if (!result) {
+      planRecalcSkipRef.current = true;
+      return;
+    }
+    if (awaitingConfirm || loading) return;
+    if (planRecalcSkipRef.current) {
+      planRecalcSkipRef.current = false;
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        setPlanRefreshing(true);
+        try {
+          const data = await consultFarmer(
+            harvestShortcutText(harvestSelection),
+            locationPayload,
+            harvestSelection
+          );
+          setResult(data);
+          setSelectedVendor(null);
+        } catch {
+          /* keep previous plan */
+        } finally {
+          setPlanRefreshing(false);
+        }
+      })();
+    }, 450);
+
+    return () => window.clearTimeout(timer);
+  }, [
+    harvestSelection.quantity_quintals,
+    harvestSelection.crop,
+    result,
+    awaitingConfirm,
+    loading,
+    locationPayload,
+  ]);
 
   function handleTextChange(value: string) {
     setText(value);
@@ -167,10 +213,6 @@ export default function App() {
     storages.find((s) => s.id === selectedStorageId) ??
     storages.find((s) => s.name === result?.route.storage_name) ??
     null;
-
-  const locationPayload = farmerLocation.coords
-    ? { lat: farmerLocation.coords.lat, lng: farmerLocation.coords.lng }
-    : null;
 
   async function runConsult(
     overrides?: ConsultOverrides | null,
@@ -227,6 +269,7 @@ export default function App() {
         }
       }
 
+      planRecalcSkipRef.current = true;
       await runConsult(overrides, consultText);
     } catch {
       setError("Could not reach KhetSmart API. Run: uvicorn main:app --reload");
@@ -499,6 +542,8 @@ export default function App() {
             {result && !loading && !showLogisticsVendors && (
               <FarmerConsultResults
                 result={result}
+                selection={harvestSelection}
+                planRefreshing={planRefreshing}
                 formatInr={formatInr}
                 selectedVendor={selectedVendor}
                 onViewFinance={() => setTab("finance")}

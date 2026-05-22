@@ -8,6 +8,7 @@ import {
   type YieldForecast,
 } from "../api";
 import { PredictHero } from "./PredictHero";
+import { PredictLiveWeather } from "./PredictLiveWeather";
 import { PredictSignalsRow } from "./PredictSignalsRow";
 import { PredictNextSteps } from "./PredictNextSteps";
 import type { AppLanguage } from "../hooks/useAppSettings";
@@ -229,6 +230,13 @@ export function PredictPanel({ totalStorages, onGoNetwork, language = "bn" }: Pr
         language={language}
       />
 
+      {yieldData.environment_layers?.weather && (
+        <PredictLiveWeather
+          weather={yieldData.environment_layers.weather}
+          language={language}
+        />
+      )}
+
       {/* GEMINI AI AGRICULTURAL BRAIN PANEL */}
       <section className="predict-gemini">
         <div
@@ -260,19 +268,36 @@ export function PredictPanel({ totalStorages, onGoNetwork, language = "bn" }: Pr
             </div>
           </div>
           {aiReport && (
-            <span
-              style={{
-                fontSize: "0.7rem",
-                padding: "4px 8px",
-                borderRadius: "20px",
-                backgroundColor: aiReport.is_live_gemini ? "rgba(232, 185, 35, 0.2)" : "rgba(139, 92, 246, 0.2)",
-                color: aiReport.is_live_gemini ? "#e8b923" : "#c084fc",
-                fontWeight: "bold",
-                border: aiReport.is_live_gemini ? "1px solid #e8b923" : "1px solid #a78bfa",
-              }}
-            >
-              {aiReport.is_live_gemini ? "⚡ GEMINI 1.5 FLASH" : "🌱 AGRONOMIC LOCAL AI"}
-            </span>
+            <div style={{ display: "flex", flexDirection: "column", gap: "4px", alignItems: "flex-end" }}>
+              <span
+                style={{
+                  fontSize: "0.7rem",
+                  padding: "4px 8px",
+                  borderRadius: "20px",
+                  backgroundColor: aiReport.is_live_gemini
+                    ? "rgba(232, 185, 35, 0.2)"
+                    : "rgba(139, 92, 246, 0.2)",
+                  color: aiReport.is_live_gemini ? "#e8b923" : "#c084fc",
+                  fontWeight: "bold",
+                  border: aiReport.is_live_gemini
+                    ? "1px solid #e8b923"
+                    : "1px solid #a78bfa",
+                }}
+              >
+                {aiReport.is_live_gemini ? "⚡ GEMINI LIVE" : "🌱 LOCAL AI"}
+              </span>
+              {aiReport.weather_live && (
+                <span
+                  style={{
+                    fontSize: "0.65rem",
+                    color: "#86efac",
+                    fontWeight: 600,
+                  }}
+                >
+                  ● OpenWeather data
+                </span>
+              )}
+            </div>
           )}
         </div>
 
@@ -285,8 +310,10 @@ export function PredictPanel({ totalStorages, onGoNetwork, language = "bn" }: Pr
           }}
         >
           {language === "bn"
-            ? "রিয়েল-টাইম মাল্টি-স্পেক্ট্রাল স্যাটেলাইট সূচক (NDVI/SAVI/GNDVI), মাটির পিএইচ ও আদ্রতা, এবং ৩০০০+ আবহাওয়া পয়েন্ট প্রসেস করে পরবর্তী মৌসুমের আলুর সঠিক পূর্বাভাস পান।"
-            : "Process real-time multi-spectral satellite indices, soil pH, moisture, and meteorological layers using advanced AI to predict next season's crop health."}
+            ? "লাইভ OpenWeather + স্যাটেলাইট (NDVI/SAVI/GNDVI), মাটি ও মান্ডি ডেটা বিশ্লেষণ করে পরবর্তী মৌসুমের আলু পূর্বাভাস পান।"
+            : language === "hi"
+              ? "लाइव OpenWeather + उपग्रह (NDVI/SAVI/GNDVI), मिट्टी और मंडी डेटा से अगले सीजन की आलू भविष्यवाणी।"
+              : "Analyzes live OpenWeather feeds plus satellite (NDVI/SAVI/GNDVI), soil, and mandi data for next-season potato outlook."}
         </p>
 
         {aiError && (

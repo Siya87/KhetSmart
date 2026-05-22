@@ -5339,6 +5339,30 @@ h3,
   color: var(--green-dark);
 }
 
+.simple-hero-strip__sub {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #64748b;
+  line-height: 1.35;
+}
+
+.simple-hero-strip--refreshing .simple-hero-strip__item--gold {
+  opacity: 0.85;
+  animation: planPulse 0.9s ease-in-out infinite;
+}
+
+@keyframes planPulse {
+  0%,
+  100% {
+    opacity: 0.85;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 .pro-card--simple {
   padding: 0.75rem;
 }
@@ -5467,6 +5491,203 @@ h3,
 
 .predict-view--simple .next-steps--simple {
   margin-top: 0;
+}
+
+/* Predict — live OpenWeather panel */
+.predict-live-weather {
+  margin-top: 0.75rem;
+  padding: 1rem;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #0f172a 0%, #1e293b 55%, #0f172a 100%);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.18);
+  color: #e2e8f0;
+}
+
+.predict-live-weather__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.85rem;
+}
+
+.predict-live-weather__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #f8fafc;
+  letter-spacing: 0.02em;
+}
+
+.predict-live-weather__badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.2);
+  color: #94a3b8;
+  max-width: 55%;
+  text-align: right;
+  line-height: 1.3;
+}
+
+.predict-live-weather__badge--on {
+  background: rgba(34, 197, 94, 0.2);
+  color: #86efac;
+  border: 1px solid rgba(34, 197, 94, 0.35);
+}
+
+.predict-live-weather__now {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.predict-live-weather__icon {
+  flex-shrink: 0;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.35));
+}
+
+.predict-live-weather__location {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.predict-live-weather__desc {
+  margin: 0.15rem 0 0;
+  font-size: 0.88rem;
+  color: #cbd5e1;
+}
+
+.predict-live-weather__temp {
+  margin: 0.35rem 0 0;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.predict-live-weather__temp-val {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1;
+}
+
+.predict-live-weather__feels {
+  font-size: 0.78rem;
+  color: #94a3b8;
+}
+
+.predict-live-weather__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.predict-live-weather__stat {
+  padding: 0.55rem 0.65rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.predict-live-weather__stat-lbl {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.15rem;
+}
+
+.predict-live-weather__stat strong {
+  font-size: 0.95rem;
+  color: #f1f5f9;
+}
+
+.predict-live-weather__forecast-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.predict-live-weather__forecast-row {
+  display: flex;
+  gap: 0.45rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.predict-live-weather__day {
+  flex: 0 0 4.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.45rem 0.35rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  text-align: center;
+}
+
+.predict-live-weather__day-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #cbd5e1;
+}
+
+.predict-live-weather__day-temp {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.predict-live-weather__day-rain {
+  font-size: 0.58rem;
+  color: #7dd3fc;
+}
+
+.predict-live-weather__stresses {
+  list-style: none;
+  margin: 0.65rem 0 0;
+  padding: 0.55rem 0.65rem;
+  border-radius: 10px;
+  background: rgba(234, 179, 8, 0.08);
+  border: 1px solid rgba(234, 179, 8, 0.2);
+  font-size: 0.75rem;
+  color: #fde68a;
+}
+
+.predict-live-weather__stresses-title {
+  font-weight: 800;
+  margin-bottom: 0.25rem;
+  list-style: none;
+}
+
+.predict-live-weather__stresses li:not(.predict-live-weather__stresses-title) {
+  margin-top: 0.2rem;
+  color: #fcd34d;
+}
+
+.predict-live-weather__hint {
+  margin: 0.65rem 0 0;
+  font-size: 0.72rem;
+  color: #94a3b8;
+  line-height: 1.4;
 }
 
 .predict-gemini {

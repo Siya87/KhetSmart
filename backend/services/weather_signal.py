@@ -25,11 +25,50 @@ _cache: tuple[dict, float] | None = None
 _CACHE_TTL_SEC = 3600
 
 
+def _merge_openweather(base: dict, live: dict) -> dict:
+    """Overlay OpenWeather live readings onto Open-Meteo corridor stats."""
+    merged = {**base, **live}
+    merged["ok"] = base.get("ok", False) or live.get("ok", False)
+    merged["is_live_openweather"] = True
+
+    tmin = live.get("temp_min_c_now") or base.get("temp_min_c_30d")
+    tmax = live.get("temp_max_c_now") or base.get("temp_max_c_30d")
+    if tmin is not None and tmax is not None:
+        merged["temp_range"] = f"{float(tmin):.0f}°C – {float(tmax):.0f}°C"
+
+    if live.get("precipitation_mm") is not None:
+        merged["precipitation_mm"] = live["precipitation_mm"]
+    elif base.get("precip_mm_14d") is not None:
+        merged["precipitation_mm"] = f"{base['precip_mm_14d']} mm (14d)"
+
+    if live.get("wet_dry_anomaly"):
+        merged["wet_dry_anomaly"] = live["wet_dry_anomaly"]
+    elif base.get("drought_risk"):
+        merged["wet_dry_anomaly"] = "dry"
+    elif base.get("waterlogging_risk"):
+        merged["wet_dry_anomaly"] = "wet"
+    else:
+        merged["wet_dry_anomaly"] = merged.get("wet_dry_anomaly", "normal")
+
+    merged["source"] = "OpenWeatherMap · live + Open-Meteo · 30d"
+    stresses = list(base.get("stresses") or [])
+    if live.get("weather_description"):
+        stresses.insert(0, f"Now: {live['weather_description']} · {live.get('current_temp_c')}°C")
+    merged["stresses"] = stresses
+    if stresses:
+        merged["detail"] = "; ".join(stresses[:3])
+    return merged
+
+
 def fetch_corridor_weather(past_days: int = 90) -> dict:
-    """Daily weather summary + stress flags for yield/glut model."""
+    """Daily weather summary + stress flags; OpenWeather live when API key set."""
     global _cache
     if _cache and _cache[1] > time.time():
         return _cache[0]
+
+    from services.openweather_signal import fetch_openweather_live
+
+    ow = fetch_openweather_live()
 
     end = datetime.now(timezone.utc).date()
     start = end - timedelta(days=past_days)
@@ -63,10 +102,26 @@ def fetch_corridor_weather(past_days: int = 90) -> dict:
     if status != 200 or payload is None:
         fallback["message"] = f"Open-Meteo unavailable — {err}"
         logger.warning("Open-Meteo fetch failed: %s", err)
+        if ow:
+            ow_only = {**fallback, **ow, "ok": True}
+            _cache = (ow_only, time.time() + _CACHE_TTL_SEC)
+            return ow_only
         return fallback
 
     payload = _summarize_open_meteo(payload)
-    payload["source"] = "Open-Meteo · corridor centroid"
+    if ow:
+        payload = _merge_openweather(payload, ow)
+    else:
+        payload["source"] = "Open-Meteo · corridor centroid"
+        payload["temp_range"] = (
+            f"{payload.get('temp_min_c_30d')}°C – {payload.get('temp_max_c_30d')}°C"
+        )
+        payload["precipitation_mm"] = f"{payload.get('precip_mm_14d', 0)} mm (14d)"
+        payload["wet_dry_anomaly"] = (
+            "dry" if payload.get("drought_risk") else "wet"
+            if payload.get("waterlogging_risk")
+            else "normal"
+        )
     _cache = (payload, time.time() + _CACHE_TTL_SEC)
     return payload
 
@@ -89,7 +144,9 @@ def _summarize_open_meteo(data: dict) -> dict:
     last7_precip = sum(float(x or 0) for x in precip[-7:])
     last30_sw = [float(x or 0) for x in sw[-30:] if x is not None]
 
+    last30_tmin = [float(x) for x in tmin[-30:] if x is not None]
     heat_days = sum(1 for t in last30_tmax if t >= HEAT_STRESS_TMAX_C)
+    frost_days = sum(1 for t in last30_tmin if t <= 2.0)
     avg_tmax = sum(last30_tmax) / len(last30_tmax) if last30_tmax else 30.0
     avg_tmin = sum(float(x or 0) for x in tmin[-30:]) / max(1, len(tmin[-30:]))
     avg_tmean = sum(float(x or 0) for x in tmean[-30:]) / max(1, len(tmean[-30:]))
@@ -137,6 +194,7 @@ def _summarize_open_meteo(data: dict) -> dict:
         "precip_mm_7d": round(last7_precip, 1),
         "solar_radiation_mj_m2_30d": round(avg_sw_mj, 2),
         "heat_stress_days_30d": heat_days,
+        "frost_risk_days_30d": frost_days,
         "drought_risk": drought,
         "waterlogging_risk": waterlog,
         "radiation_ok": radiation_ok,
@@ -160,6 +218,7 @@ def _fallback_weather() -> dict:
         "precip_mm_7d": 20.0,
         "solar_radiation_mj_m2_30d": 18.0,
         "heat_stress_days_30d": 3,
+        "frost_risk_days_30d": 0,
         "drought_risk": False,
         "waterlogging_risk": False,
         "radiation_ok": True,

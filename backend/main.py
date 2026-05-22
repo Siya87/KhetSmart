@@ -270,11 +270,45 @@ def yield_forecast(region: str = "Damodar River Basin", db: Session = Depends(ge
     }
 
 
+def _weather_prompt_block(weather: dict) -> str:
+    temp_range = weather.get("temp_range") or (
+        f"{weather.get('temp_min_c_30d', '—')}°C – {weather.get('temp_max_c_30d', '—')}°C"
+    )
+    precip = weather.get("precipitation_mm") or weather.get("precip_mm_14d", "—")
+    if isinstance(precip, (int, float)):
+        precip = f"{precip} mm"
+    lines = [
+        f"- Data source: {weather.get('source', 'corridor')}",
+        f"- Live location: {weather.get('location_name', 'Damodar corridor')}",
+        f"- Current temperature: {weather.get('current_temp_c', '—')}°C (feels {weather.get('feels_like_c', '—')}°C)",
+        f"- Sky / conditions: {weather.get('weather_description', weather.get('weather_main', '—'))}",
+        f"- Humidity: {weather.get('humidity_pct', '—')}% · Wind: {weather.get('wind_kph', '—')} km/h",
+        f"- Temperature range (today): {temp_range}",
+        f"- Corridor 30d max/min mean: {weather.get('temp_max_c_30d')}°C / {weather.get('temp_min_c_30d')}°C / {weather.get('temp_mean_c_30d')}°C",
+        f"- Precipitation signal: {precip} · 14d corridor rain: {weather.get('precip_mm_14d', '—')} mm",
+        f"- Heat stress days (30d): {weather.get('heat_stress_days_30d', 0)} · Frost risk days (30d): {weather.get('frost_risk_days_30d', 0)}",
+        f"- Wet/dry anomaly: {weather.get('wet_dry_anomaly', 'normal')}",
+        f"- Solar radiation 30d avg: {weather.get('solar_radiation_mj_m2_30d', '—')} MJ/m²",
+        f"- Yield weather factor: ×{weather.get('yield_factor', 1)}",
+    ]
+    if weather.get("forecast_days"):
+        fc = weather["forecast_days"][:3]
+        fc_txt = "; ".join(
+            f"{d.get('label')}: {d.get('temp_min_c')}–{d.get('temp_max_c')}°C, rain {d.get('rain_mm')}mm"
+            for d in fc
+        )
+        lines.append(f"- 5-day forecast (live): {fc_txt}")
+    if weather.get("stresses"):
+        lines.append(f"- Stress flags: {'; '.join(weather['stresses'][:4])}")
+    return "\n    ".join(lines)
+
+
 @app.get("/api/yield/ai-prediction")
 def yield_ai_prediction(lang: str = "bn", db: Session = Depends(get_db)):
-    import os
     import json
     import urllib.request
+
+    from config import GEMINI_API_KEY
     from services.yield_service import get_latest_yield
     from services.yield_model import live_forecast_layers
 
@@ -288,12 +322,7 @@ def yield_ai_prediction(lang: str = "bn", db: Session = Depends(get_db)):
     pressure = live["layers"]["pressure"]
     glut = live["glut_risk_pct"]
 
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
-        api_key = os.getenv("google-map-api")
-    
-    if api_key:
-        api_key = api_key.strip()
+    api_key = (GEMINI_API_KEY or "").strip()
 
     # Mapped language name
     lang_name = "English"
@@ -312,12 +341,8 @@ def yield_ai_prediction(lang: str = "bn", db: Session = Depends(get_db)):
     - GNDVI (Green NDVI - Chlorophyll/Nitrogen indicator): {veg.get('gndvi', 0.40)}
     - Canopy Composite Index: {veg.get('composite_index', 0.45)}
 
-    [METEOROLOGICAL & WEATHER DATA]
-    - Temperature Range: {weather.get('temp_range', '18°C - 32°C')}
-    - Recent Precipitation: {weather.get('precipitation_mm', '42mm')}
-    - Abiotic Heat Stress Days (30d): {weather.get('heat_stress_days_30d', 0)} days
-    - Abiotic Frost Risk: {weather.get('frost_risk_days_30d', 0)} days
-    - Abiotic Wet/Dry Anomalies: {weather.get('wet_dry_anomaly', 'normal')}
+    [METEOROLOGICAL & WEATHER DATA — LIVE FEEDS]
+    {_weather_prompt_block(weather)}
 
     [SOIL DATA]
     - Potato Suitability Score: {soil.get('potato_suitability', 'excellent')}
@@ -458,7 +483,9 @@ Real-time meteorology shows stable parameters for West Bengal's key potato belt.
         "ok": True,
         "is_live_gemini": is_live_gemini,
         "report": ai_report,
-        "api_key_configured": bool(api_key)
+        "api_key_configured": bool(api_key),
+        "weather_live": bool(weather.get("is_live_openweather")),
+        "weather_source": weather.get("source", ""),
     }
 
 

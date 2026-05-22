@@ -152,15 +152,46 @@ export interface YieldForecast {
       detail?: string;
     };
     weather?: {
+      ok?: boolean;
+      is_live_openweather?: boolean;
+      fetched_at?: string;
+      location_name?: string;
+      current_temp_c?: number;
+      feels_like_c?: number;
+      temp_range?: string;
+      humidity_pct?: number;
+      wind_kph?: number;
+      wind_speed_ms?: number;
+      weather_main?: string;
+      weather_description?: string;
+      weather_icon?: string;
+      weather_icon_url?: string;
       temp_max_c_30d?: number;
       temp_min_c_30d?: number;
+      temp_mean_c_30d?: number;
       precip_mm_14d?: number;
       precip_mm_7d?: number;
+      precipitation_mm?: number | string;
+      precip_mm_next_24h?: number;
+      pop_max_48h_pct?: number;
+      wet_dry_anomaly?: string;
       solar_radiation_mj_m2_30d?: number;
       heat_stress_days_30d?: number;
+      frost_risk_days_30d?: number;
       drought_risk?: boolean;
       waterlogging_risk?: boolean;
       yield_factor?: number;
+      stresses?: string[];
+      forecast_days?: Array<{
+        date?: string;
+        label?: string;
+        temp_min_c?: number;
+        temp_max_c?: number;
+        pop_max_pct?: number;
+        rain_mm?: number;
+        icon?: string;
+        description?: string;
+      }>;
       detail?: string;
       source?: string;
     };
@@ -338,6 +369,8 @@ export interface AiPredictionResponse {
   is_live_gemini: boolean;
   report: string;
   api_key_configured: boolean;
+  weather_live?: boolean;
+  weather_source?: string;
 }
 
 export async function fetchAiPrediction(lang = "bn"): Promise<AiPredictionResponse> {

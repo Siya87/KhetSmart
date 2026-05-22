@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { ConsultResponse } from "../api";
+import type { ConsultOverrides, ConsultResponse } from "../api";
 import type { AppLanguage } from "../hooks/useAppSettings";
 import { glutLabelBnEn, tFarmer } from "../i18n/farmerSimple";
 import { DistressPriceCard } from "./DistressPriceCard";
@@ -8,6 +8,8 @@ import { IconTruck } from "./icons";
 
 type Props = {
   result: ConsultResponse;
+  selection?: ConsultOverrides;
+  planRefreshing?: boolean;
   formatInr: (n: number) => string;
   selectedVendor?: any; // LogisticsVendor | null
   onViewFinance?: () => void;
@@ -22,6 +24,8 @@ function truncateStorage(name: string, max = 22) {
 
 export function FarmerConsultResults({
   result,
+  selection,
+  planRefreshing = false,
   formatInr,
   selectedVendor = null,
   onViewFinance,
@@ -38,8 +42,20 @@ export function FarmerConsultResults({
   const [selectedPayment, setSelectedPayment] = useState<"razorpay" | "upi" | "cod" | "cash">("razorpay");
   const [confirmedPayment, setConfirmedPayment] = useState<string>("");
 
-  // Calculations
-  const quantity = result.parsed.quantity_quintals;
+  const quantity = selection?.quantity_quintals ?? result.parsed.quantity_quintals;
+  const cropLabel = selection?.crop ?? result.parsed.crop;
+  const livePricePerQ = result.route.market_price_per_quintal;
+  const baseQty = result.parsed.quantity_quintals || 50;
+  const selectionDrift =
+    quantity !== result.parsed.quantity_quintals ||
+    cropLabel !== result.parsed.crop;
+  const estLogistics =
+    selectedVendor?.estimated_quote_inr ??
+    Math.round((quantity / baseQty) * result.route.logistics_cost_inr);
+  const profitInr =
+    planRefreshing || selectionDrift
+      ? Math.max(0, Math.round(quantity * livePricePerQ) - estLogistics)
+      : result.route.estimated_profit_inr;
   const storageFee = quantity * 120; // Standard booking fee: ₹120 per quintal
   const logisticsCost = selectedVendor ? selectedVendor.estimated_quote_inr : result.route.logistics_cost_inr;
   const totalAmount = storageFee + logisticsCost;
@@ -566,10 +582,26 @@ TOTAL AMOUNT PAID:         ${formatInr(totalAmount)}
         <h2 className="farmer-results__title">{t.planTitle}</h2>
       </div>
 
-      <div className="simple-hero-strip">
+      <div
+        className={`simple-hero-strip ${planRefreshing ? "simple-hero-strip--refreshing" : ""}`}
+      >
         <div className="simple-hero-strip__item simple-hero-strip__item--gold">
           <span className="simple-hero-strip__lbl">{t.profit}</span>
-          <strong>{formatInr(result.route.estimated_profit_inr)}</strong>
+          <strong>{planRefreshing ? "…" : formatInr(profitInr)}</strong>
+          <span className="simple-hero-strip__sub">
+            {planRefreshing
+              ? t.updatingPlan
+              : `${quantity} q × ₹${livePricePerQ.toLocaleString("en-IN")}/q − ${formatInr(estLogistics)} ${t.transportCost.toLowerCase()}`}
+          </span>
+        </div>
+        <div className="simple-hero-strip__item">
+          <span className="simple-hero-strip__lbl">{t.liveMandi}</span>
+          <strong>
+            ₹{livePricePerQ.toLocaleString("en-IN")}/q
+          </strong>
+          <span className="simple-hero-strip__sub">
+            {result.route.market_name ?? "Corridor mandi"}
+          </span>
         </div>
         <div className="simple-hero-strip__item">
           <span className="simple-hero-strip__lbl">{t.glutLabel}</span>
@@ -580,7 +612,7 @@ TOTAL AMOUNT PAID:         ${formatInr(totalAmount)}
         <div className="simple-hero-strip__item">
           <span className="simple-hero-strip__lbl">{t.yourLoad}</span>
           <strong>
-            {quantity} q · {result.parsed.crop}
+            {quantity} q · {cropLabel}
           </strong>
         </div>
       </div>
@@ -611,7 +643,7 @@ TOTAL AMOUNT PAID:         ${formatInr(totalAmount)}
           storageNameFull={result.route.storage_name}
           distanceKm={result.route.distance_km}
           costInr={logisticsCost}
-          profitInr={result.route.estimated_profit_inr}
+          profitInr={profitInr}
           language={language}
           simple
         />

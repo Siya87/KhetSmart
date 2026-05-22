@@ -43,6 +43,12 @@ CORS_ORIGINS = os.getenv(
 
 DATA_DIR = BASE_DIR / "data"
 
+# OpenWeatherMap — live current + forecast on Predict tab
+OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY", "")
+
+# Google Gemini — AI crop brain on Predict tab
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+
 # Farmer login/signup session tokens (set in production)
 FARMER_AUTH_SECRET = os.getenv(
     "FARMER_AUTH_SECRET", "khetsmart-dev-change-in-production"
