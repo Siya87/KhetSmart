@@ -345,7 +345,7 @@ export default function App() {
         open={showAuthModal}
         language={language}
         busy={authBusy}
-        showGuestOption={onboarding.phase === "auth" && !authPromptOpen}
+        showGuestOption={false}
         sendOtp={async (phone) => {
           setAuthBusy(true);
           try {

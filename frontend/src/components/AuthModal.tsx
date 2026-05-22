@@ -181,20 +181,22 @@ export function AuthModal({
         type="button"
         className="auth-modal__backdrop"
         aria-label={t.close}
-        onClick={onClose}
-        disabled={busy}
+        onClick={showGuestOption ? onClose : undefined}
+        disabled={busy || !showGuestOption}
       />
       <div className="auth-modal__card">
-        <button
-          type="button"
-          className="auth-modal__close"
-          onClick={onClose}
-          disabled={busy}
-          aria-label={t.close}
-          title={t.closeHint}
-        >
-          ×
-        </button>
+        {showGuestOption && (
+          <button
+            type="button"
+            className="auth-modal__close"
+            onClick={onClose}
+            disabled={busy}
+            aria-label={t.close}
+            title={t.closeHint}
+          >
+            ×
+          </button>
+        )}
         <span className="auth-modal__icon" aria-hidden>
           🌾
         </span>

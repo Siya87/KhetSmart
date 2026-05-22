@@ -31,10 +31,10 @@ export function useOnboarding(shouldMarkLocationDone: boolean, authReady: boolea
   }, [shouldMarkLocationDone, locationDone, completeLocationStep]);
 
   let phase: OnboardingPhase = "app";
-  if (!locationDone) {
-    phase = "location";
-  } else if (!authReady) {
+  if (!authReady) {
     phase = "auth";
+  } else if (!locationDone) {
+    phase = "location";
   }
 
   return {

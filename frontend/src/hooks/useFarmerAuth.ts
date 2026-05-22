@@ -13,23 +13,19 @@ import {
 } from "../api";
 
 const TOKEN_KEY = "khetsmart_farmer_token";
-const GUEST_KEY = "khetsmart_farmer_guest";
 
 function applyAuthSuccess(
   data: FarmerAuthResponse,
   setToken: (t: string | null) => void,
-  setFarmer: (f: FarmerProfile | null) => void,
-  setIsGuest: (g: boolean) => void
+  setFarmer: (f: FarmerProfile | null) => void
 ) {
   try {
     localStorage.setItem(TOKEN_KEY, data.token);
-    sessionStorage.removeItem(GUEST_KEY);
   } catch {
     /* ignore */
   }
   setToken(data.token);
   setFarmer(data.farmer);
-  setIsGuest(false);
 }
 
 export function useFarmerAuth() {
@@ -41,16 +37,8 @@ export function useFarmerAuth() {
       return null;
     }
   });
-  const [isGuest, setIsGuest] = useState(() => {
-    try {
-      return sessionStorage.getItem(GUEST_KEY) === "1";
-    } catch {
-      return false;
-    }
-  });
   const [hydrating, setHydrating] = useState(() => {
     try {
-      if (sessionStorage.getItem(GUEST_KEY) === "1") return false;
       return !!localStorage.getItem(TOKEN_KEY);
     } catch {
       return false;
@@ -67,12 +55,7 @@ export function useFarmerAuth() {
       /* ignore */
     }
     if (t) {
-      setIsGuest(false);
-      try {
-        sessionStorage.removeItem(GUEST_KEY);
-      } catch {
-        /* ignore */
-      }
+      // Authenticated
     } else {
       profileLoadedRef.current = false;
       setFarmer(null);
@@ -114,19 +97,6 @@ export function useFarmerAuth() {
     };
   }, [token, persistToken, farmer]);
 
-  const continueAsGuest = useCallback(() => {
-    persistToken(null);
-    setFarmer(null);
-    setIsGuest(true);
-    profileLoadedRef.current = false;
-    try {
-      sessionStorage.setItem(GUEST_KEY, "1");
-    } catch {
-      /* ignore */
-    }
-    setHydrating(false);
-  }, [persistToken]);
-
   const sendOtp = useCallback((phone: string) => sendFarmerOtp(phone), []);
 
   const verifyOtp = useCallback(async (phone: string, otp: string) => {
@@ -136,8 +106,7 @@ export function useFarmerAuth() {
       applyAuthSuccess(
         { token: data.token, farmer: data.farmer },
         setToken,
-        setFarmer,
-        setIsGuest
+        setFarmer
       );
       setHydrating(false);
       return { status: "logged_in" as const };
@@ -157,7 +126,7 @@ export function useFarmerAuth() {
         district,
       });
       profileLoadedRef.current = true;
-      applyAuthSuccess(data, setToken, setFarmer, setIsGuest);
+      applyAuthSuccess(data, setToken, setFarmer);
       setHydrating(false);
       return data.farmer;
     },
@@ -167,7 +136,7 @@ export function useFarmerAuth() {
   const login = useCallback(async (phone: string, pin: string) => {
     const data = await farmerLogin({ phone, pin });
     profileLoadedRef.current = true;
-    applyAuthSuccess(data, setToken, setFarmer, setIsGuest);
+    applyAuthSuccess(data, setToken, setFarmer);
     setHydrating(false);
     return data.farmer;
   }, []);
@@ -192,10 +161,8 @@ export function useFarmerAuth() {
     }
     persistToken(null);
     setFarmer(null);
-    setIsGuest(false);
     profileLoadedRef.current = false;
     try {
-      sessionStorage.removeItem(GUEST_KEY);
       sessionStorage.removeItem("khetsmart_onboarding_location_done");
     } catch {
       /* ignore */
@@ -208,9 +175,9 @@ export function useFarmerAuth() {
   return {
     farmer,
     token,
-    isGuest,
+    isGuest: false,
     isAuthenticated,
-    isReady: isAuthenticated || isGuest,
+    isReady: isAuthenticated,
     hydrating,
     sendOtp,
     verifyOtp,
@@ -218,6 +185,6 @@ export function useFarmerAuth() {
     login,
     setPin,
     logout,
-    continueAsGuest,
+    continueAsGuest: () => {},
   };
 }
