@@ -19,6 +19,7 @@ export type SettingsMenuProps = {
   onOpenLoginSignup: () => void;
   onLogout: () => void | Promise<void>;
   onSetPin?: (pin: string, pinConfirm: string) => Promise<void>;
+  onOpenOrders: () => void;
 };
 
 const LABELS = {
@@ -42,6 +43,8 @@ const LABELS = {
     large: "Large",
     opsHint: "Storage pipeline & admin tools",
     logout: "Log out",
+    myOrders: "My Bookings & Orders",
+    myOrdersHint: "View receipts and list for auction",
   },
   bn: {
     settings: "সেটিংস",
@@ -63,6 +66,8 @@ const LABELS = {
     large: "বড়",
     opsHint: "স্টোরেজ ও অ্যাডমিন টুল",
     logout: "লগ আউট",
+    myOrders: "আমার বুকিং ও অর্ডার",
+    myOrdersHint: "রসিদ দেখুন এবং নিলামে লিস্টিং করুন",
   },
   hi: {
     settings: "सेटिंग्स",
@@ -84,6 +89,8 @@ const LABELS = {
     large: "बड़ा",
     opsHint: "स्टोरेज और एडमिन टूल",
     logout: "लॉग आउट",
+    myOrders: "मेरे बुकिंग और ऑर्डर",
+    myOrdersHint: "रसीदें देखें और नीलामी में लिस्ट करें",
   },
 } as const;
 
@@ -105,6 +112,7 @@ export function SettingsMenu({
   onOpenLoginSignup,
   onLogout,
   onSetPin,
+  onOpenOrders,
 }: SettingsMenuProps) {
   const [panel, setPanel] = useState<Panel>("menu");
   const [pin, setPin] = useState("");
@@ -209,6 +217,27 @@ export function SettingsMenu({
                   </span>
                 </button>
               )}
+            </li>
+            <li>
+              <button
+                type="button"
+                className="settings-menu__item"
+                onClick={() => {
+                  onClose();
+                  onOpenOrders();
+                }}
+              >
+                <span className="settings-menu__item-icon" aria-hidden>
+                  📋
+                </span>
+                <span className="settings-menu__item-text">
+                  <strong>{t.myOrders}</strong>
+                  <small>{t.myOrdersHint}</small>
+                </span>
+                <span className="settings-menu__chevron" aria-hidden>
+                  ›
+                </span>
+              </button>
             </li>
             <li>
               <button

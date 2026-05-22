@@ -16,6 +16,7 @@ import { FinancePanel } from "./components/FinancePanel";
 import { OpsOverlay } from "./components/OpsOverlay";
 import { SettingsMenu } from "./components/SettingsMenu";
 import { FarmerConsultResults } from "./components/FarmerConsultResults";
+import { OrdersPanel } from "./components/OrdersPanel";
 import { PredictPanel } from "./components/PredictPanel";
 import { SelectedStorageCard } from "./components/SelectedStorageCard";
 import { StorageMap, type RoutePath } from "./components/StorageMap";
@@ -37,13 +38,22 @@ import { useFarmerLocation } from "./hooks/useFarmerLocation";
 import { useOnboarding } from "./hooks/useOnboarding";
 import { tFarmer, tNav } from "./i18n/farmerSimple";
 
-type Tab = "farmer" | "predict" | "network" | "finance";
+type Tab = "farmer" | "predict" | "network" | "finance" | "orders";
 
 const TAB_ICONS: Record<Tab, ReactNode> = {
   farmer: <IconMic className="tab-icon" />,
   predict: <IconSatellite className="tab-icon" />,
   network: <IconWarehouse className="tab-icon" />,
   finance: <IconRupee className="tab-icon" />,
+  orders: (
+    <svg className="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+      <polyline points="14 2 14 8 20 8"></polyline>
+      <line x1="16" y1="13" x2="8" y2="13"></line>
+      <line x1="16" y1="17" x2="8" y2="17"></line>
+      <polyline points="10 9 9 9 8 9"></polyline>
+    </svg>
+  ),
 };
 
 function formatInr(n: number) {
@@ -56,6 +66,7 @@ function formatInr(n: number) {
 
 export default function App() {
   const [tab, setTab] = useState<Tab>("farmer");
+  const [financeSubTab, setFinanceSubTab] = useState<"loan" | "insurance" | "auction">("loan");
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
   const [inputError, setInputError] = useState<string | null>(null);
@@ -382,6 +393,7 @@ export default function App() {
             setSettingsOpen(false);
             setAuthPromptOpen(true);
           }}
+          onOpenOrders={() => setTab("orders")}
           onLogout={async () => {
             await farmerAuth.logout();
             setSettingsOpen(false);
@@ -511,6 +523,20 @@ export default function App() {
             formatInr={formatInr}
             onGoFarmer={() => setTab("farmer")}
             language={language}
+            activeSubTab={financeSubTab}
+            onTabChange={setFinanceSubTab}
+          />
+        )}
+
+        {tab === "orders" && (
+          <OrdersPanel
+            language={language}
+            formatInr={formatInr}
+            onGoFarmer={() => setTab("farmer")}
+            onGoAuction={() => {
+              setFinanceSubTab("auction");
+              setTab("finance");
+            }}
           />
         )}
 

@@ -262,9 +262,9 @@ export const PREDICT_SIMPLE = {
 } as const;
 
 export const NAV_LABELS = {
-  en: { farmer: "Farmer", predict: "Predict", network: "Network", finance: "Finance" },
-  bn: { farmer: "ফার্মার", predict: "বাজার", network: "ম্যাপ", finance: "ঋণ" },
-  hi: { farmer: "किसान", predict: "बाजार", network: "मैप", finance: "पैसा" },
+  en: { farmer: "Farmer", predict: "Predict", network: "Network", finance: "Finance", orders: "Orders" },
+  bn: { farmer: "ফার্মার", predict: "বাজার", network: "ম্যাপ", finance: "ঋণ", orders: "অর্ডার" },
+  hi: { farmer: "किसान", predict: "बाजार", network: "मैप", finance: "पैसा", orders: "ऑर्डर" },
 } as const;
 
 export function tNav(lang: AppLanguage) {

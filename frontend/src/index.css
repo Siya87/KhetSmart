@@ -4855,6 +4855,10 @@ h3,
   grid-template-columns: repeat(4, 1fr);
 }
 
+.tabs--5 {
+  grid-template-columns: repeat(5, 1fr);
+}
+
 .tabs {
   position: fixed;
   bottom: 1rem;

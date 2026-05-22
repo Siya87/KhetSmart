@@ -12,13 +12,18 @@ type Props = {
   formatInr: (n: number) => string;
   onGoFarmer: () => void;
   language: AppLanguage;
+  activeSubTab?: "loan" | "insurance" | "auction";
+  onTabChange?: (tab: "loan" | "insurance" | "auction") => void;
 };
 
 type FinanceTab = "loan" | "insurance" | "auction";
 
-export function FinancePanel({ result, formatInr, onGoFarmer, language }: Props) {
+export function FinancePanel({ result, formatInr, onGoFarmer, language, activeSubTab, onTabChange }: Props) {
   const t = tFinance(language);
-  const [tab, setTab] = useState<FinanceTab>("loan");
+  const [localTab, setLocalTab] = useState<FinanceTab>("loan");
+
+  const tab = activeSubTab ?? localTab;
+  const setTab = onTabChange ?? setLocalTab;
 
   const tabs: { id: FinanceTab; label: string }[] = [
     { id: "loan", label: t.tabLoan },
@@ -70,7 +75,7 @@ export function FinancePanel({ result, formatInr, onGoFarmer, language }: Props)
             <FinanceInsurancePanel result={result} language={language} formatInr={formatInr} />
           )}
           {tab === "auction" && (
-            <FinanceAuctionPanel result={result} language={language} formatInr={formatInr} />
+            <FinanceAuctionPanel language={language} formatInr={formatInr} />
           )}
         </>
       )}
