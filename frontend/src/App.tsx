@@ -108,7 +108,7 @@ export default function App() {
   const [vendorsLoading, setVendorsLoading] = useState(false);
   const [selectedVendor, setSelectedVendor] = useState<LogisticsVendor | null>(null);
   const [planRefreshing, setPlanRefreshing] = useState(false);
-  const planRecalcSkipRef = useRef(true);
+  const lastFetchedSelectionRef = useRef<{ quantity: number; crop: string } | null>(null);
 
   const loadPredict = useCallback(async () => {
     try {
@@ -133,13 +133,15 @@ export default function App() {
     : null;
 
   useEffect(() => {
-    if (!result) {
-      planRecalcSkipRef.current = true;
-      return;
-    }
+    if (!result) return;
     if (awaitingConfirm || loading) return;
-    if (planRecalcSkipRef.current) {
-      planRecalcSkipRef.current = false;
+
+    const last = lastFetchedSelectionRef.current;
+    if (
+      last &&
+      last.quantity === harvestSelection.quantity_quintals &&
+      last.crop === harvestSelection.crop
+    ) {
       return;
     }
 
@@ -147,12 +149,15 @@ export default function App() {
       void (async () => {
         setPlanRefreshing(true);
         try {
+          const q = harvestSelection.quantity_quintals;
+          const c = harvestSelection.crop;
           const data = await consultFarmer(
             harvestShortcutText(harvestSelection),
             locationPayload,
             harvestSelection
           );
           setResult(data);
+          lastFetchedSelectionRef.current = { quantity: q, crop: c };
           setSelectedVendor(null);
         } catch {
           /* keep previous plan */
@@ -225,6 +230,10 @@ export default function App() {
     try {
       const data = await consultFarmer(consultText, locationPayload, overrides);
       setResult(data);
+      lastFetchedSelectionRef.current = {
+        quantity: overrides?.quantity_quintals ?? harvestSelection.quantity_quintals,
+        crop: overrides?.crop ?? harvestSelection.crop
+      };
       setSelectedVendor(null);
       setParsePreview(null);
       setConfirmOverrides(null);
@@ -269,7 +278,6 @@ export default function App() {
         }
       }
 
-      planRecalcSkipRef.current = true;
       await runConsult(overrides, consultText);
     } catch {
       setError("Could not reach KhetSmart API. Run: uvicorn main:app --reload");
