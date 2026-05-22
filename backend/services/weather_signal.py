@@ -1,10 +1,13 @@
 """Corridor weather via Open-Meteo (no API key) — temperature, rain, solar radiation."""
 from __future__ import annotations
 
+import logging
 import time
 from datetime import datetime, timedelta, timezone
 
-import httpx
+from services.external_api import fetch_json
+
+logger = logging.getLogger(__name__)
 
 # Damodar potato corridor centroid
 CORRIDOR_LAT = 24.05
@@ -49,19 +52,23 @@ def fetch_corridor_weather(past_days: int = 90) -> dict:
     }
 
     fallback = _fallback_weather()
-    try:
-        with httpx.Client(timeout=25.0) as client:
-            r = client.get(OPEN_METEO_URL, params=params)
-        if r.status_code != 200:
-            fallback["message"] = f"Open-Meteo HTTP {r.status_code}"
-            return fallback
-        payload = _summarize_open_meteo(r.json())
-        payload["source"] = "Open-Meteo · corridor centroid"
-        _cache = (payload, time.time() + _CACHE_TTL_SEC)
-        return payload
-    except Exception as e:
-        fallback["message"] = str(e)
+    status, payload, err = fetch_json(
+        "open_meteo",
+        "GET",
+        OPEN_METEO_URL,
+        params=params,
+        timeout=20.0,
+        max_attempts=3,
+    )
+    if status != 200 or payload is None:
+        fallback["message"] = f"Open-Meteo unavailable — {err}"
+        logger.warning("Open-Meteo fetch failed: %s", err)
         return fallback
+
+    payload = _summarize_open_meteo(payload)
+    payload["source"] = "Open-Meteo · corridor centroid"
+    _cache = (payload, time.time() + _CACHE_TTL_SEC)
+    return payload
 
 
 def _summarize_open_meteo(data: dict) -> dict:

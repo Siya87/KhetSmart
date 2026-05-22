@@ -38,6 +38,41 @@ declare namespace google {
       setMap(map: Map | null): void;
     }
 
+    class Geocoder {
+      constructor();
+      geocode(
+        request: GeocoderRequest,
+        callback: (
+          results: GeocoderResult[] | null,
+          status: GeocoderStatus
+        ) => void
+      ): void;
+    }
+
+    interface GeocoderRequest {
+      location?: LatLngLiteral;
+      address?: string;
+    }
+
+    interface GeocoderResult {
+      formatted_address: string;
+      address_components: GeocoderAddressComponent[];
+    }
+
+    interface GeocoderAddressComponent {
+      long_name: string;
+      short_name: string;
+      types: string[];
+    }
+
+    type GeocoderStatus =
+      | "OK"
+      | "ZERO_RESULTS"
+      | "OVER_QUERY_LIMIT"
+      | "REQUEST_DENIED"
+      | "INVALID_REQUEST"
+      | "UNKNOWN_ERROR";
+
     interface MapOptions {
       center?: LatLngLiteral;
       zoom?: number;

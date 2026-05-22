@@ -1,5 +1,6 @@
 import type { FarmerCoords, LocationStatus } from "../hooks/useFarmerLocation";
 import type { AppLanguage } from "../hooks/useAppSettings";
+import { usePlaceLabel } from "../hooks/usePlaceLabel";
 import { tFarmer } from "../i18n/farmerSimple";
 
 type Props = {
@@ -10,6 +11,25 @@ type Props = {
   language?: AppLanguage;
 };
 
+function PinIcon() {
+  return (
+    <svg className="header-loc-zomato__pin" viewBox="0 0 24 24" width="22" height="22" aria-hidden>
+      <path
+        fill="currentColor"
+        d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z"
+      />
+    </svg>
+  );
+}
+
+function ChevronDown() {
+  return (
+    <svg className="header-loc-zomato__chevron" viewBox="0 0 24 24" width="18" height="18" aria-hidden>
+      <path fill="currentColor" d="M7 10l5 5 5-5H7z" />
+    </svg>
+  );
+}
+
 export function FarmerHeaderLocation({
   status,
   coords,
@@ -18,36 +38,58 @@ export function FarmerHeaderLocation({
   language = "bn",
 }: Props) {
   const t = tFarmer(language);
+  const live = status === "active" && coords != null;
+  const place = usePlaceLabel(coords, live, language);
 
   if (status === "requesting") {
     return (
-      <div className="header-loc header-loc--pending">
-        <span className="spinner header-loc__spinner" />
-        <span>GPS…</span>
-      </div>
+      <button type="button" className="header-loc-zomato header-loc-zomato--pending" disabled>
+        <PinIcon />
+        <span className="header-loc-zomato__text">
+          <span className="header-loc-zomato__row">
+            <span className="header-loc-zomato__title">{t.gpsAcquiring}</span>
+            <span className="spinner header-loc-zomato__spinner" aria-hidden />
+          </span>
+          <span className="header-loc-zomato__sub">{t.locationBusy}</span>
+        </span>
+      </button>
     );
   }
 
-  if (status === "active" && coords) {
+  if (live && coords) {
     return (
-      <div className="header-loc header-loc--live header-loc--simple" aria-live="polite">
-        <span className="header-loc__pin" aria-hidden>
-          📍
+      <button
+        type="button"
+        className="header-loc-zomato header-loc-zomato--live"
+        onClick={onEnable}
+        aria-label={place.title}
+      >
+        <PinIcon />
+        <span className="header-loc-zomato__text">
+          <span className="header-loc-zomato__row">
+            <span className="header-loc-zomato__title">
+              {place.loading ? t.yourFarm : place.title}
+            </span>
+            <ChevronDown />
+          </span>
+          <span className="header-loc-zomato__sub">
+            {place.loading ? "…" : place.subtitle}
+          </span>
         </span>
-        <span className="header-loc__title">{t.farmGps}</span>
-      </div>
+      </button>
     );
   }
 
   return (
-    <div className="header-loc header-loc--off header-loc--simple">
-      <span className="header-loc__pin header-loc__pin--muted" aria-hidden>
-        ○
+    <button type="button" className="header-loc-zomato header-loc-zomato--off" onClick={onEnable}>
+      <PinIcon />
+      <span className="header-loc-zomato__text">
+        <span className="header-loc-zomato__row">
+          <span className="header-loc-zomato__title">{t.setLocation}</span>
+          <ChevronDown />
+        </span>
+        <span className="header-loc-zomato__sub">{error ?? t.gpsOffHint}</span>
       </span>
-      <span className="header-loc__title">{error ?? t.farmGpsOff}</span>
-      <button type="button" className="header-loc__enable" onClick={onEnable}>
-        {t.enableGps}
-      </button>
-    </div>
+    </button>
   );
 }
